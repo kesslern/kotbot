@@ -10,6 +10,9 @@ val ktor_version = "1.1.4"
 dependencies {
     compile("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.2.1")
     compile("io.ktor:ktor-network:$ktor_version")
+    compile("io.github.microutils:kotlin-logging:1.6.24")
+    val logback           = "1.2.+"
+    compile("ch.qos.logback:logback-classic:$logback")
     implementation(kotlin("stdlib-jdk8"))
 }
 repositories {
