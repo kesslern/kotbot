@@ -16,7 +16,7 @@ val logger = KotlinLogging.logger {}
 
 @ExperimentalIoApi
 @KtorExperimentalAPI
-fun main() = runBlocking<Unit> {
+fun main() = runBlocking {
     val port = 6667
     val hostname = "irc.freenode.net"
 
@@ -27,8 +27,8 @@ fun main() = runBlocking<Unit> {
     val input = socket.openReadChannel()
     val output = socket.openWriteChannel(autoFlush = true)
 
-    val response = input.readUTF8Line()
-    logger.info("Server said: '$response'")
+    val firstResponse = input.readUTF8Line()
+    logger.info("Server said: '$firstResponse'")
 
     output.write("NICK kotbot\r\n")
     output.write("USER kotbot 0 * :kotbot\r\n")
@@ -38,7 +38,7 @@ fun main() = runBlocking<Unit> {
     while (!input.isClosedForRead) {
         logger.info("Reading...")
 
-        val response = input.readUTF8Line() ?: throw java.lang.RuntimeException("idk")
+        val response = input.readUTF8Line() ?: throw java.lang.RuntimeException("Could not retrieve data from server")
         Parser(response).parse()
         logger.info("Server said: '$response'")
         if (response.startsWith("PING")) {
@@ -48,9 +48,9 @@ fun main() = runBlocking<Unit> {
 }
 
 class Scanner(
-        val message: String
+        private val message: String
 ) {
-    var position = 0
+    private var position = 0
 
     init {
         logger.info("Scanning message: $message")
@@ -61,7 +61,7 @@ class Scanner(
         return message[position - 1]
     }
 
-    fun consume(char: Char): Unit {
+    fun consume(char: Char) {
         if (message[position] == char) position++ else throw RuntimeException("Expected $char")
     }
 
@@ -90,7 +90,7 @@ class Parser(
         parseMessage()
     }
 
-    fun parseMessage() {
+    private fun parseMessage() {
         var prefix = ""
         val command: String?
 
