@@ -1,4 +1,3 @@
-
 import io.ktor.network.selector.ActorSelectorManager
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
@@ -40,7 +39,7 @@ fun main() = runBlocking<Unit> {
         logger.info("Reading...")
 
         val response = input.readUTF8Line() ?: throw java.lang.RuntimeException("idk")
-        parseMessage(response)
+        Parser(response).parse()
         logger.info("Server said: '$response'")
         if (response.startsWith("PING")) {
             output.write(response.replace("PING", "PONG") + "\r\n", Charsets.US_ASCII)
@@ -48,74 +47,108 @@ fun main() = runBlocking<Unit> {
     }
 }
 
-var position = 0
+class Scanner(
+        val message: String
+) {
+    var position = 0
 
-fun parseMessage(message: String) {
-    logger.info("Parsing message: " + message)
-    var prefix = ""
-    var command: String?
-
-    position = 0
-    if (message[position] == ':') {
-        position++ // consume ':'
-        prefix = parsePrefix(message)
-        position++ // consume space
+    init {
+        logger.info("Scanning message: $message")
     }
-    command = parseCommand(message)
-    while (position != message.length - 1 && message[position+1] != '\r') {
-        logger.info("Found param: " + parseParam(message))
-    }
-    // parse params while not crlf next
 
-    logger.info("'$prefix' '$command' '${message.slice(position until message.length)}'")
-}
-
-fun parseParam(message: String): String {
-    if (message[position] != ' ') throw RuntimeException("No space")
-    position++ // consume space
-
-    var middle = ""
-    if (isNoSpCrLfCl(message)) {
-        middle += message[position]
+    fun advance(): Char {
         position++
-        while ((isNoSpCrLfCl(message) || message[position] == ':') && position != message.length - 1) {
-            middle += message[position]
-            position++
-        }
-    } else if (message[position] == ':') {
-        position++
-        while ((isNoSpCrLfCl(message) || message[position] == ':' || message[position] == ' ') && position != message.length - 1) {
-            middle += message[position]
-            position++
-        }
+        return message[position - 1]
     }
-    return middle
+
+    fun consume(char: Char): Unit {
+        if (message[position] == char) position++ else throw RuntimeException("Expected $char")
+    }
+
+    fun current(): Char = message[position]
+
+    fun isAtEnd(): Boolean = position == message.length - 1
+
+    fun parseUntil(char: Char): String {
+        val end = message.findNextAfter(position, ' ') ?: throw RuntimeException("Expected $char")
+        val result = message.slice(position until end)
+        position = end
+        return result
+    }
 }
 
-fun isNoSpCrLfCl(message: String): Boolean =
-        !listOf('\r', '\n', ' ', ':', '\u0000').contains(message[position])
+class Parser(
 
-fun parsePrefix(message: String): String {
-    val end = message.findNextAfter(position, ' ') ?: throw RuntimeException("missing space")
-    val prefix = message.slice(position until end)
-    position = end
-    return prefix
-}
+) {
+    private lateinit var scanner: Scanner
 
-fun parseCommand(message: String): String {
-    var command = ""
-    if (message[position] in 'A'..'Z' || message[position] in 'a'..'z') {
-        while (message[position] in 'A'..'Z' || message[position] in 'a'..'z') {
-            command += message[position++]
-        }
-    } else if (message[position] in '0'..'9') {
-        while (message[position] in '0'..'9') {
-            command += message[position++]
-        }
-    } else {
-        throw RuntimeException("No command")
+    constructor(message: String) : this() {
+        scanner = Scanner(message)
     }
-    return command
+
+    fun parse() {
+        parseMessage()
+    }
+
+    fun parseMessage() {
+        var prefix = ""
+        val command: String?
+
+        // Parse the prefix
+        if (scanner.current() == ':') {
+            scanner.advance() // consume ':'
+            prefix = parsePrefix()
+            scanner.advance() // consume space
+        }
+
+        command = parseCommand()
+
+        while (!scanner.isAtEnd()) {
+            logger.info("Found param: " + parseParam())
+        }
+        // parse params while not crlf next
+
+        logger.info("'$prefix' '$command'")
+    }
+
+    private fun parseParam(): String {
+        scanner.consume(' ')
+
+        var middle = ""
+        if (isNoSpCrLfCl()) {
+            middle += scanner.advance()
+            while ((isNoSpCrLfCl() || scanner.current() == ':') && !scanner.isAtEnd()) {
+                middle += scanner.advance()
+            }
+        } else if (scanner.current() == ':') {
+            scanner.advance()
+            while ((isNoSpCrLfCl() || scanner.current() == ':' || scanner.current() == ' ') && !scanner.isAtEnd()) {
+                middle += scanner.advance()
+            }
+        }
+        return middle
+    }
+
+    private fun isNoSpCrLfCl(): Boolean =
+            !listOf('\r', '\n', ' ', ':', '\u0000').contains(scanner.current())
+
+    private fun parsePrefix() = scanner.parseUntil(' ')
+
+    private fun parseCommand(): String {
+        var command = ""
+        if (scanner.current() in 'A'..'Z' || scanner.current() in 'a'..'z') {
+            while (scanner.current() in 'A'..'Z' || scanner.current() in 'a'..'z') {
+                command += scanner.advance()
+            }
+        } else if (scanner.current() in '0'..'9') {
+            while (scanner.current() in '0'..'9') {
+                command += scanner.advance()
+            }
+        } else {
+            throw RuntimeException("No command")
+        }
+        return command
+    }
 }
 
 fun String.findNextAfter(start: Int, toFind: Char): Int? {
