@@ -56,10 +56,7 @@ class Scanner(
         logger.info("Scanning message: $message")
     }
 
-    fun advance(): Char {
-        position++
-        return message[position - 1]
-    }
+    fun advance(): Char = message[position++]
 
     fun consume(char: Char) {
         if (message[position] == char) position++ else throw RuntimeException("Expected $char")
@@ -67,7 +64,13 @@ class Scanner(
 
     fun current(): Char = message[position]
 
-    fun isAtEnd(): Boolean = position == message.length - 1
+    fun isCurrent(vararg chars: Char) = chars.contains(current())
+
+    fun isCurrentLetter() = current() in 'A'..'Z' || current() in 'a'..'z'
+
+    fun isCurrentDigit() = current() in '0'..'9'
+
+    fun isPastEnd(): Boolean = position >= message.length
 
     fun parseUntil(char: Char): String {
         val end = message.findNextAfter(position, ' ') ?: throw RuntimeException("Expected $char")
@@ -77,9 +80,7 @@ class Scanner(
     }
 }
 
-class Parser(
-
-) {
+class Parser private constructor () {
     private lateinit var scanner: Scanner
 
     constructor(message: String) : this() {
@@ -95,7 +96,7 @@ class Parser(
         val command: String?
 
         // Parse the prefix
-        if (scanner.current() == ':') {
+        if (scanner.isCurrent(':')) {
             scanner.advance() // consume ':'
             prefix = parsePrefix()
             scanner.advance() // consume space
@@ -103,10 +104,9 @@ class Parser(
 
         command = parseCommand()
 
-        while (!scanner.isAtEnd()) {
+        while (!scanner.isPastEnd()) {
             logger.info("Found param: " + parseParam())
         }
-        // parse params while not crlf next
 
         logger.info("'$prefix' '$command'")
     }
@@ -115,37 +115,36 @@ class Parser(
         scanner.consume(' ')
 
         var middle = ""
-        if (isNoSpCrLfCl()) {
+        if (isNotSpCrLfCl()) {
             middle += scanner.advance()
-            while ((isNoSpCrLfCl() || scanner.current() == ':') && !scanner.isAtEnd()) {
+            while (!scanner.isPastEnd() && (isNotSpCrLfCl() || scanner.isCurrent(':'))) {
                 middle += scanner.advance()
             }
         } else if (scanner.current() == ':') {
             scanner.advance()
-            while ((isNoSpCrLfCl() || scanner.current() == ':' || scanner.current() == ' ') && !scanner.isAtEnd()) {
+            while (!scanner.isPastEnd() && (isNotSpCrLfCl() || scanner.isCurrent(':', ' '))) {
                 middle += scanner.advance()
             }
         }
         return middle
     }
 
-    private fun isNoSpCrLfCl(): Boolean =
-            !listOf('\r', '\n', ' ', ':', '\u0000').contains(scanner.current())
+    private fun isNotSpCrLfCl(): Boolean = !scanner.isCurrent('\r', '\n', ' ', ':', '\u0000')
 
     private fun parsePrefix() = scanner.parseUntil(' ')
 
     private fun parseCommand(): String {
         var command = ""
-        if (scanner.current() in 'A'..'Z' || scanner.current() in 'a'..'z') {
-            while (scanner.current() in 'A'..'Z' || scanner.current() in 'a'..'z') {
-                command += scanner.advance()
-            }
-        } else if (scanner.current() in '0'..'9') {
-            while (scanner.current() in '0'..'9') {
-                command += scanner.advance()
-            }
-        } else {
-            throw RuntimeException("No command")
+        when {
+            scanner.isCurrentLetter() ->
+                while (scanner.isCurrentLetter()) {
+                    command += scanner.advance()
+                }
+            scanner.isCurrentDigit() ->
+                while (scanner.isCurrentDigit()) {
+                    command += scanner.advance()
+                }
+            else -> throw RuntimeException("No command")
         }
         return command
     }
