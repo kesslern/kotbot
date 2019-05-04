@@ -38,7 +38,7 @@ fun main() = runBlocking {
     while (!input.isClosedForRead) {
         logger.info("Reading...")
 
-        val response = input.readUTF8Line() ?: throw java.lang.RuntimeException("Could not retrieve data from server")
+        val response = input.readUTF8Line() ?: throw RuntimeException("Could not retrieve data from server")
         Parser(response).parse()
         logger.info("Server said: '$response'")
         if (response.startsWith("PING")) {
