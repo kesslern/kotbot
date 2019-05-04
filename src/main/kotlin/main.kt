@@ -1,3 +1,5 @@
+package us.kesslern.kotbot
+
 import io.ktor.network.selector.ActorSelectorManager
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
@@ -39,114 +41,9 @@ fun main() = runBlocking {
         logger.info("Reading...")
 
         val response = input.readUTF8Line() ?: throw RuntimeException("Could not retrieve data from server")
-        logger.info("Server said: '${Parser(response).parse()}'")
+        logger.info("Server said: '${MessageParser(response).parse()}'")
         if (response.startsWith("PING")) {
             output.write(response.replace("PING", "PONG") + "\r\n", Charsets.US_ASCII)
-        }
-    }
-}
-
-data class ServerMessage(
-        val prefix: String?,
-        val command: String,
-        val parameters: List<String>
-)
-
-class Scanner(
-        private val message: String
-) {
-    private var position = 0
-
-    init {
-        logger.info("Scanning message: $message")
-    }
-
-    fun advance(): Char = message[position++]
-
-    fun consume(char: Char) {
-        if (message[position] == char) position++ else throw RuntimeException("Expected $char")
-    }
-
-    fun current(): Char = message[position]
-
-    fun isCurrent(vararg chars: Char) = chars.contains(current())
-
-    fun isCurrentLetter() = current() in 'A'..'Z' || current() in 'a'..'z'
-
-    fun isCurrentDigit() = current() in '0'..'9'
-
-    fun isPastEnd(): Boolean = position >= message.length
-
-    fun consumeWhile(condition: () -> Boolean): String {
-        var result = ""
-        while (!isPastEnd() && condition()) {
-            result += advance()
-        }
-        return result
-    }
-}
-
-class Parser private constructor() {
-    private lateinit var scanner: Scanner
-
-    constructor(message: String) : this() {
-        scanner = Scanner(message)
-    }
-
-    fun parse(): ServerMessage = parseMessage()
-
-    private fun parseMessage(): ServerMessage {
-        var prefix: String? = null
-        val command: String?
-
-        // Parse the prefix
-        if (scanner.isCurrent(':')) {
-            scanner.consume(':')
-            prefix = parsePrefix()
-            scanner.consume(' ')
-        }
-
-        command = parseCommand()
-
-        val params = mutableListOf<String>()
-        while (!scanner.isPastEnd()) {
-            params += parseParam()
-        }
-
-        return ServerMessage(
-                prefix = prefix,
-                command = command,
-                parameters = params
-        )
-    }
-
-        private fun parseParam(): String {
-        scanner.consume(' ')
-
-        return when {
-            isNotSpCrLfCl() ->
-                scanner.advance() + scanner.consumeWhile {
-                    isNotSpCrLfCl() || scanner.isCurrent(':')
-                }
-            scanner.current() == ':' ->
-                scanner.advance() + scanner.consumeWhile {
-                    isNotSpCrLfCl() || scanner.isCurrent(':', ' ')
-                }
-            else -> throw RuntimeException("Invalid parameter")
-        }
-    }
-
-    private fun isNotSpCrLfCl(): Boolean = !scanner.isCurrent('\r', '\n', ' ', ':', '\u0000')
-
-    private fun parsePrefix() = scanner.consumeWhile { scanner.current() != ' ' }
-
-    private fun parseCommand(): String {
-        return when {
-            scanner.isCurrentLetter() ->
-                scanner.consumeWhile { scanner.isCurrentLetter() }
-            scanner.isCurrentDigit() ->
-                scanner.consumeWhile { scanner.isCurrentDigit() }
-            else -> throw RuntimeException("No command")
         }
     }
 }
