@@ -48,10 +48,12 @@ class MessageParser private constructor() {
                 scanner.advance() + scanner.consumeWhile {
                     isNotSpCrLfCl() || scanner.isCurrent(':')
                 }
-            scanner.current() == ':' ->
-                scanner.advance() + scanner.consumeWhile {
+            scanner.current() == ':' -> {
+                scanner.advance()
+                scanner.consumeWhile {
                     isNotSpCrLfCl() || scanner.isCurrent(':', ' ')
                 }
+            }
             else -> throw RuntimeException("Invalid parameter")
         }
     }
