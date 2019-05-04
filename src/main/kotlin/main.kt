@@ -72,13 +72,6 @@ class Scanner(
 
     fun isPastEnd(): Boolean = position >= message.length
 
-    fun parseUntil(char: Char): String {
-        val end = message.findNextAfter(position, ' ') ?: throw RuntimeException("Expected $char")
-        val result = message.slice(position until end)
-        position = end
-        return result
-    }
-
     fun consumeWhile(condition: () -> Boolean): String {
         var result = ""
         while (!isPastEnd() && condition()) {
@@ -137,7 +130,7 @@ class Parser private constructor() {
 
     private fun isNotSpCrLfCl(): Boolean = !scanner.isCurrent('\r', '\n', ' ', ':', '\u0000')
 
-    private fun parsePrefix() = scanner.parseUntil(' ')
+    private fun parsePrefix() = scanner.consumeWhile { scanner.current() != ' ' }
 
     private fun parseCommand(): String {
         return when {
