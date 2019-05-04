@@ -18,7 +18,7 @@ val logger = KotlinLogging.logger {}
 @KtorExperimentalAPI
 fun main() = runBlocking {
     val port = 6667
-    val hostname = "irc.freenode.net"
+    val hostname = "localhost"
 
     val exec = Executors.newCachedThreadPool()
     val selector = ActorSelectorManager(exec.asCoroutineDispatcher())
@@ -39,13 +39,18 @@ fun main() = runBlocking {
         logger.info("Reading...")
 
         val response = input.readUTF8Line() ?: throw RuntimeException("Could not retrieve data from server")
-        Parser(response).parse()
-        logger.info("Server said: '$response'")
+        logger.info("Server said: '${Parser(response).parse()}'")
         if (response.startsWith("PING")) {
             output.write(response.replace("PING", "PONG") + "\r\n", Charsets.US_ASCII)
         }
     }
 }
+
+data class ServerMessage(
+        val prefix: String?,
+        val command: String,
+        val parameters: List<String>
+)
 
 class Scanner(
         private val message: String
@@ -88,12 +93,10 @@ class Parser private constructor() {
         scanner = Scanner(message)
     }
 
-    fun parse() {
-        parseMessage()
-    }
+    fun parse(): ServerMessage = parseMessage()
 
-    private fun parseMessage() {
-        var prefix = ""
+    private fun parseMessage(): ServerMessage {
+        var prefix: String? = null
         val command: String?
 
         // Parse the prefix
@@ -105,14 +108,19 @@ class Parser private constructor() {
 
         command = parseCommand()
 
+        val params = mutableListOf<String>()
         while (!scanner.isPastEnd()) {
-            logger.info("Found param: " + parseParam())
+            params += parseParam()
         }
 
-        logger.info("'$prefix' '$command'")
+        return ServerMessage(
+                prefix = prefix,
+                command = command,
+                parameters = params
+        )
     }
 
-    private fun parseParam(): String {
+        private fun parseParam(): String {
         scanner.consume(' ')
 
         return when {
@@ -141,11 +149,4 @@ class Parser private constructor() {
             else -> throw RuntimeException("No command")
         }
     }
-}
-
-fun String.findNextAfter(start: Int, toFind: Char): Int? {
-    for (i in start until this.length) {
-        if (this[i] == toFind) return i
-    }
-    return null
 }
