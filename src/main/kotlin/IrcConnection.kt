@@ -15,7 +15,7 @@ import java.net.InetSocketAddress
 import java.util.concurrent.Executors
 
 @KtorExperimentalAPI
-class IrcConnection private constructor () {
+class IrcConnection private constructor() {
     private val exec = Executors.newCachedThreadPool()
     private val selector = ActorSelectorManager(exec.asCoroutineDispatcher())
 

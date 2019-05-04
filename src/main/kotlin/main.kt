@@ -2,21 +2,19 @@ package us.kesslern.kotbot
 
 import io.ktor.util.KtorExperimentalAPI
 import kotlinx.coroutines.runBlocking
-import kotlinx.io.core.ExperimentalIoApi
 import mu.KotlinLogging
 
 val logger = KotlinLogging.logger {}
 
 var registered = false
 
-@ExperimentalIoApi
 @KtorExperimentalAPI
 fun main() = runBlocking {
     KotBot.create()
 }
 
 @KtorExperimentalAPI
-class KotBot private constructor (
+class KotBot private constructor(
         private val connection: IrcConnection
 ) {
     companion object {
