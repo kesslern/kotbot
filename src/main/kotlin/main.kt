@@ -78,9 +78,17 @@ class Scanner(
         position = end
         return result
     }
+
+    fun consumeWhile(condition: () -> Boolean): String {
+        var result = ""
+        while (!isPastEnd() && condition()) {
+            result += advance()
+        }
+        return result
+    }
 }
 
-class Parser private constructor () {
+class Parser private constructor() {
     private lateinit var scanner: Scanner
 
     constructor(message: String) : this() {
@@ -97,9 +105,9 @@ class Parser private constructor () {
 
         // Parse the prefix
         if (scanner.isCurrent(':')) {
-            scanner.advance() // consume ':'
+            scanner.consume(':')
             prefix = parsePrefix()
-            scanner.advance() // consume space
+            scanner.consume(' ')
         }
 
         command = parseCommand()
@@ -114,19 +122,17 @@ class Parser private constructor () {
     private fun parseParam(): String {
         scanner.consume(' ')
 
-        var middle = ""
-        if (isNotSpCrLfCl()) {
-            middle += scanner.advance()
-            while (!scanner.isPastEnd() && (isNotSpCrLfCl() || scanner.isCurrent(':'))) {
-                middle += scanner.advance()
-            }
-        } else if (scanner.current() == ':') {
-            scanner.advance()
-            while (!scanner.isPastEnd() && (isNotSpCrLfCl() || scanner.isCurrent(':', ' '))) {
-                middle += scanner.advance()
-            }
+        return when {
+            isNotSpCrLfCl() ->
+                scanner.advance() + scanner.consumeWhile {
+                    isNotSpCrLfCl() || scanner.isCurrent(':')
+                }
+            scanner.current() == ':' ->
+                scanner.advance() + scanner.consumeWhile {
+                    isNotSpCrLfCl() || scanner.isCurrent(':', ' ')
+                }
+            else -> throw RuntimeException("Invalid parameter")
         }
-        return middle
     }
 
     private fun isNotSpCrLfCl(): Boolean = !scanner.isCurrent('\r', '\n', ' ', ':', '\u0000')
@@ -134,19 +140,13 @@ class Parser private constructor () {
     private fun parsePrefix() = scanner.parseUntil(' ')
 
     private fun parseCommand(): String {
-        var command = ""
-        when {
+        return when {
             scanner.isCurrentLetter() ->
-                while (scanner.isCurrentLetter()) {
-                    command += scanner.advance()
-                }
+                scanner.consumeWhile { scanner.isCurrentLetter() }
             scanner.isCurrentDigit() ->
-                while (scanner.isCurrentDigit()) {
-                    command += scanner.advance()
-                }
+                scanner.consumeWhile { scanner.isCurrentDigit() }
             else -> throw RuntimeException("No command")
         }
-        return command
     }
 }
 
