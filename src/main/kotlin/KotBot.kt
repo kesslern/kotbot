@@ -1,13 +1,21 @@
 package us.kesslern.kotbot
 
 import io.ktor.util.KtorExperimentalAPI
+import kotlinx.coroutines.runBlocking
 import org.graalvm.polyglot.Context
 
 class PluginContext(
-        val kotbotAdder:  (suspend (ServerMessage) -> Unit) -> Unit
+        val kotbotAdder:  (suspend (ServerMessage) -> Unit) -> Unit,
+        val kotbotResponder: suspend (String) -> Unit
 ) {
     fun addEventHandler(handler: suspend (ServerMessage) -> Unit) {
         kotbotAdder(handler)
+    }
+
+    fun respond(response: String?) {
+        if (response != null) {
+            runBlocking { kotbotResponder("PRIVMSG #discodevs $response") }
+        }
     }
 }
 
@@ -56,13 +64,28 @@ class KotBot private constructor(
 
     init {
         val context = Context.newBuilder().allowAllAccess(true).build()
-        context.polyglotBindings.putMember("context", PluginContext(kotbotAdder = ::addEventHandler))
+        context.polyglotBindings.putMember("context", PluginContext(kotbotAdder = ::addEventHandler, kotbotResponder = connection::write))
         context.eval("js", """
             var context = Polyglot.import('context')
-            context.addEventHandler(() => {
-                print("hello!!")
+            context.addEventHandler((message, idk) => {
+            print(JSON.toString(idk))
+                if (message.command === "PRIVMSG" && message.parameters[1] == "javascript") {
+                    context.respond("hi from javascript")
+                }
             })
-        """.trimIndent())
+        """)
+
+        context.eval("python", """
+            import polyglot
+            context = polyglot.import_value('context')
+
+            def hello(message, idk):
+                print(type(idk))
+                if message.command == "PRIVMSG" and message.parameters[1] == "python":
+                    context.respond("hi from python")
+
+            context.addEventHandler(hello)
+        """)
     }
 
     private suspend fun run() {

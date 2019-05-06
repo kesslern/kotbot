@@ -1,9 +1,9 @@
 package us.kesslern.kotbot
 
 data class ServerMessage(
-        val prefix: String?,
-        val command: String,
-        val parameters: List<String>
+        @JvmField val prefix: String?,
+        @JvmField val command: String,
+        @JvmField val parameters: List<String>
 )
 
 class MessageParser private constructor() {
