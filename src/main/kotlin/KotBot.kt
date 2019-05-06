@@ -1,13 +1,22 @@
 package us.kesslern.kotbot
 
 import io.ktor.util.KtorExperimentalAPI
+import org.graalvm.polyglot.Context
+
+class PluginContext(
+        val kotbotAdder:  (suspend (ServerMessage) -> Unit) -> Unit
+) {
+    fun addEventHandler(handler: suspend (ServerMessage) -> Unit) {
+        kotbotAdder(handler)
+    }
+}
 
 @KtorExperimentalAPI
 class KotBot private constructor(
         private val connection: IrcConnection
 ) {
 
-    private val eventHandlers = mutableListOf<suspend (ServerMessage) -> Unit>(
+    private var eventHandlers = mutableListOf<suspend (ServerMessage) -> Unit>(
             {
                 if (it.command == "PING") {
                     val pong = "PONG ${it.parameters.first()}"
@@ -29,6 +38,10 @@ class KotBot private constructor(
             }
     )
 
+    private fun addEventHandler(handler: suspend (ServerMessage) -> Unit) {
+        eventHandlers.add(handler)
+    }
+
     companion object {
         suspend fun create(events: List<suspend (ServerMessage) -> Unit> = listOf()) {
             val connection = IrcConnection.connect(
@@ -36,9 +49,20 @@ class KotBot private constructor(
                     port = 6667
             )
             val kotbot = KotBot(connection)
-            kotbot.eventHandlers += events
+            kotbot.eventHandlers.addAll(events)
             kotbot.run()
         }
+    }
+
+    init {
+        val context = Context.newBuilder().allowAllAccess(true).build()
+        context.polyglotBindings.putMember("context", PluginContext(kotbotAdder = ::addEventHandler))
+        context.eval("js", """
+            var context = Polyglot.import('context')
+            context.addEventHandler(() => {
+                print("hello!!")
+            })
+        """.trimIndent())
     }
 
     private suspend fun run() {
