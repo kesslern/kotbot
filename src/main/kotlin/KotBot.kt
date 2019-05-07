@@ -5,17 +5,15 @@ import kotlinx.coroutines.runBlocking
 import org.graalvm.polyglot.Context
 
 class PluginContext(
-        val kotbotAdder:  (suspend (ServerMessage) -> Unit) -> Unit,
-        val kotbotResponder: suspend (String) -> Unit
+        val eventHandlerAdder:  (suspend (ServerMessage) -> Unit) -> Unit,
+        val responder: suspend (String) -> Unit
 ) {
     fun addEventHandler(handler: suspend (ServerMessage) -> Unit) {
-        kotbotAdder(handler)
+        eventHandlerAdder(handler)
     }
 
-    fun respond(response: String?) {
-        if (response != null) {
-            runBlocking { kotbotResponder("PRIVMSG #discodevs $response") }
-        }
+    fun respond(response: String) {
+        runBlocking { responder("PRIVMSG #discodevs $response") }
     }
 }
 
@@ -63,9 +61,10 @@ class KotBot private constructor(
     }
 
     init {
-        val context = Context.newBuilder().allowAllAccess(true).build()
-        context.polyglotBindings.putMember("context", PluginContext(kotbotAdder = ::addEventHandler, kotbotResponder = connection::write))
-        context.eval("js", """
+        val polyglotContext = Context.newBuilder().allowAllAccess(true).build()
+        val pluginContext = PluginContext(eventHandlerAdder = ::addEventHandler, responder = connection::write)
+        polyglotContext.polyglotBindings.putMember("context", pluginContext)
+        polyglotContext.eval("js", """
             var context = Polyglot.import('context')
             context.addEventHandler((message, idk) => {
             print(JSON.toString(idk))
@@ -75,16 +74,16 @@ class KotBot private constructor(
             })
         """)
 
-        context.eval("python", """
-            import polyglot
-            context = polyglot.import_value('context')
+        polyglotContext.eval("python", """
+import polyglot
+context = polyglot.import_value('context')
 
-            def hello(message, idk):
-                print(type(idk))
-                if message.command == "PRIVMSG" and message.parameters[1] == "python":
-                    context.respond("hi from python")
+def hello(message, idk):
+   print(type(idk))
+   if message.command == "PRIVMSG" and message.parameters[1] == "python":
+       context.respond("hi from python")
 
-            context.addEventHandler(hello)
+context.addEventHandler(hello)
         """)
     }
 
