@@ -27,7 +27,14 @@ fun main() = runBlocking {
     ))
 }
 
-object Configuration {
+object IrcConfig {
+    val username = ConfigurationFile.requiredStringValue("username")
+    val hostname = ConfigurationFile.requiredStringValue("hostname")
+    val channel = ConfigurationFile.requiredStringValue("channel")
+    val port = ConfigurationFile.requiredIntValue("port")
+}
+
+object ConfigurationFile {
     private val json: JsonObject
 
     init {
@@ -39,8 +46,16 @@ object Configuration {
         }
     }
 
-    fun value(key: String): String? {
+    fun stringValue(key: String): String? {
         val value = json.string(key)
         return if (value?.isBlank() == true) null else value
     }
+
+    fun requiredStringValue(key: String): String {
+        return stringValue(key) ?: throw RuntimeException("Missing required config for $key")
+    }
+
+    fun intValue(key: String): Int? = json.int(key)
+
+    fun requiredIntValue(key: String): Int = intValue(key) ?: throw RuntimeException("Missing required config for $key")
 }

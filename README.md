@@ -7,14 +7,6 @@ An IRC bot written in Kotlin, using raw sockets backed by Ktor. Using GraalVM, p
 ```
 
 ## TODO
-- Configuration
-  - Read configuration json from file
-  - Provide API for plugins to access config
-- Make connection configurable
-  - Host
-  - Name
-  - Port
-  - Channel
 - Optional ability to identify to services
 - Parse usernames from server messages
 - Parse commands based on a configurable prefix

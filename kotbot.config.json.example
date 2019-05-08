@@ -1,4 +1,8 @@
 {
+  "username": "kotbot",
+  "hostname": "localhost",
+  "channel": "#discodevs",
+  "port": 6667,
   "testConfig": "foobar",
   "emptyString": ""
 }

@@ -15,6 +15,10 @@ class PluginContext(
     fun respond(response: String) {
         runBlocking { responder("PRIVMSG #discodevs $response") }
     }
+
+    fun configString(key: String): String? = ConfigurationFile.stringValue(key)
+
+    fun configInt(key: String): Int? = ConfigurationFile.intValue(key)
 }
 
 @KtorExperimentalAPI
@@ -31,15 +35,15 @@ class KotBot private constructor(
             },
             {
                 if (it.command == "001") {
-                    connection.write("JOIN #discodevs\r\n")
-                    connection.write("PRIVMSG #discodevs :Hello from raw sockets in kotlin\r\n")
+                    connection.write("JOIN ${IrcConfig.channel}\r\n")
+                    connection.write("PRIVMSG ${IrcConfig.channel} :Hello from raw sockets in kotlin\r\n")
                 }
             },
             {
                 if (it.command == "NOTICE" && !registered) {
                     registered = true
-                    connection.write("NICK kotbot\r\n")
-                    connection.write("USER kotbot 0 * :kotbot\r\n")
+                    connection.write("NICK ${IrcConfig.username}\r\n")
+                    connection.write("USER ${IrcConfig.username} 0 * :${IrcConfig.username}\r\n")
                 }
             }
     )
@@ -51,8 +55,8 @@ class KotBot private constructor(
     companion object {
         suspend fun create(events: List<suspend (ServerMessage) -> Unit> = listOf()) {
             val connection = IrcConnection.connect(
-                    hostname = "localhost",
-                    port = 6667
+                    hostname = IrcConfig.hostname,
+                    port = IrcConfig.port
             )
             val kotbot = KotBot(connection)
             kotbot.eventHandlers.addAll(events)
