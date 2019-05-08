@@ -35,6 +35,9 @@ class KotBot private constructor(
             },
             {
                 if (it.command == "001") {
+                    if (IrcConfig.identifyPassword != null) {
+                        connection.write("PRIVMSG NickServ :IDENTIFY ${IrcConfig.identifyOwner} ${IrcConfig.identifyPassword}\r\n")
+                    }
                     connection.write("JOIN ${IrcConfig.channel}\r\n")
                     connection.write("PRIVMSG ${IrcConfig.channel} :Hello from raw sockets in kotlin\r\n")
                 }

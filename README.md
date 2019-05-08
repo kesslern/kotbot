@@ -7,7 +7,6 @@ An IRC bot written in Kotlin, using raw sockets backed by Ktor. Using GraalVM, p
 ```
 
 ## TODO
-- Optional ability to identify to services
 - Parse usernames from server messages
 - Parse commands based on a configurable prefix
 - Figure out how to make, configure, and run a distributable jar

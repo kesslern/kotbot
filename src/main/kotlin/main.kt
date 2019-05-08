@@ -30,6 +30,8 @@ fun main() = runBlocking {
 object IrcConfig {
     val username = ConfigurationFile.requiredStringValue("username")
     val hostname = ConfigurationFile.requiredStringValue("hostname")
+    val identifyOwner = ConfigurationFile.stringValue("identify_owner")
+    val identifyPassword = ConfigurationFile.stringValue("identify_password")
     val channel = ConfigurationFile.requiredStringValue("channel")
     val port = ConfigurationFile.requiredIntValue("port")
 }
