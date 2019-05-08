@@ -73,9 +73,7 @@ class MessageParser private constructor() {
     }
 
     private fun isNotSpCrLfCl(): Boolean = !scanner.isCurrent('\r', '\n', ' ', ':', '\u0000')
-
-    private fun parsePrefix() = scanner.consumeWhile { scanner.current() != ' ' }
-
+    
     private fun parseCommand(): String {
         return when {
             scanner.isCurrentLetter() ->
