@@ -1,7 +1,7 @@
 {
   "username": "kotbot",
   "hostname": "localhost",
-  "channel": "#discodevs",
+  "channel": "#example",
   "port": 6667,
   "identify_password": "",
   "identify_owner": "",
