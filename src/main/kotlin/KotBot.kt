@@ -5,10 +5,10 @@ import kotlinx.coroutines.runBlocking
 import org.graalvm.polyglot.Context
 
 class PluginContext(
-        val eventHandlerAdder:  (suspend (ServerMessage) -> Unit) -> Unit,
+        val eventHandlerAdder:  (suspend (KotbotMessage) -> Unit) -> Unit,
         val responder: suspend (String) -> Unit
 ) {
-    fun addEventHandler(handler: suspend (ServerMessage) -> Unit) {
+    fun addEventHandler(handler: suspend (KotbotMessage) -> Unit) {
         eventHandlerAdder(handler)
     }
 
@@ -21,12 +21,19 @@ class PluginContext(
     fun configInt(key: String): Int? = ConfigurationFile.intValue(key)
 }
 
+data class KotbotMessage (
+    @JvmField val source: String,
+    @JvmField val text: String
+)
+
 @KtorExperimentalAPI
 class KotBot private constructor(
         private val connection: IrcConnection
 ) {
 
-    private var eventHandlers = mutableListOf<suspend (ServerMessage) -> Unit>(
+    private val kotbotEventHandlers = mutableListOf<suspend (KotbotMessage) -> Unit>()
+
+    private val ircEventHandlers = listOf<suspend (ServerMessage) -> Unit>(
             {
                 if (it.command == "PING") {
                     val pong = "PONG ${it.parameters.first()}"
@@ -48,37 +55,42 @@ class KotBot private constructor(
                     connection.write("NICK ${IrcConfig.username}")
                     connection.write("USER ${IrcConfig.username} 0 * :${IrcConfig.username}")
                 }
+            },
+            {
+                if (it.command == "PRIVMSG") {
+                    val channel = it.parameters[0]
+                    val text = it.parameters[1]
+                    val message = KotbotMessage(channel, text)
+                    kotbotEventHandlers.forEach { it(message) }
+                }
             }
     )
 
-    private fun addEventHandler(handler: suspend (ServerMessage) -> Unit) {
-        eventHandlers.add(handler)
+    private fun addKotbotEventHandler(handler: suspend (KotbotMessage) -> Unit) {
+        kotbotEventHandlers.add(handler)
     }
 
     companion object {
-        suspend fun create(events: List<suspend (ServerMessage) -> Unit> = listOf()) {
+        suspend fun create() {
             val connection = IrcConnection.connect(
                     hostname = IrcConfig.hostname,
                     port = IrcConfig.port
             )
-            val kotbot = KotBot(connection)
-            kotbot.eventHandlers.addAll(events)
-            kotbot.run()
+            KotBot(connection).run()
         }
     }
 
     init {
         val polyglotContext = Context.newBuilder().allowAllAccess(true).build()
-        val pluginContext = PluginContext(eventHandlerAdder = ::addEventHandler, responder = connection::write)
+        val pluginContext = PluginContext(eventHandlerAdder = ::addKotbotEventHandler, responder = connection::write)
         polyglotContext.polyglotBindings.putMember("context", pluginContext)
         polyglotContext.eval("js", """
             var context = Polyglot.import('context')
-            context.addEventHandler((message, idk) => {
-            print(JSON.toString(idk))
-                if (message.command === "PRIVMSG" && message.parameters[1] == "javascript") {
-                    context.respond("hi from javascript")
-                }
-            })
+            context.addEventHandler((message) => {
+            if (message.text == "javascript") {
+                context.respond("hi from javascript")
+            }
+        })
         """)
 
         polyglotContext.eval("python", """
@@ -87,7 +99,7 @@ context = polyglot.import_value('context')
 
 def hello(message, idk):
    print(type(idk))
-   if message.command == "PRIVMSG" and message.parameters[1] == "python":
+   if message.text == "python":
        context.respond("hi from python")
 
 context.addEventHandler(hello)
@@ -105,6 +117,6 @@ context.addEventHandler(hello)
     }
 
     private suspend fun eventHandler(event: ServerMessage) {
-        eventHandlers.forEach { it(event) }
+        ircEventHandlers.forEach { it(event) }
     }
 }
