@@ -9,16 +9,18 @@ group = "us.kesslern"
 version = "1.0-SNAPSHOT"
 
 dependencies {
-    compile("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.2.1")
-    compile("io.ktor:ktor-network:1.1.4")
-    compile("io.github.microutils:kotlin-logging:1.6.24")
-    compile("ch.qos.logback:logback-classic:1.2.+")
-    compile("org.graalvm.sdk:graal-sdk:1.0.0-rc16")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.2.1")
+    implementation("io.ktor:ktor-network:1.1.4")
+    implementation("io.github.microutils:kotlin-logging:1.6.24")
+    implementation("ch.qos.logback:logback-classic:1.2.+")
+    implementation("org.graalvm.sdk:graal-sdk:1.0.0-rc16")
+    implementation("com.beust:klaxon:5.0.1")
     implementation(kotlin("stdlib-jdk8"))
 }
 
 repositories {
     mavenCentral()
+    jcenter()
 }
 
 application {
