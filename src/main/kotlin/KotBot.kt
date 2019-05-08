@@ -74,7 +74,7 @@ class KotBot private constructor(
                     val channel = it.parameters[0]
                     val text = it.parameters[1]
                     val message = KotbotMessage(channel, text)
-                    kotbotEventHandlers.forEach { it(message) }
+                    kotbotEventHandlers.forEach { try { it(message) } catch (e: Exception) {} }
                 }
             }
     )
@@ -105,7 +105,6 @@ class KotBot private constructor(
             }
             if (message.text.startsWith("weather")) {
                 const zip = message.text.split(" ")[1]
-                if (!zip) return
                 const key = context.configString("openweathermap")
                 const weather = JSON.parse(context.request("http://api.openweathermap.org/data/2.5/weather?zip=" + zip + "&APPID=" + key))
                 const temp = ("" + ((weather.main.temp - 273.15) * 9/5 + 32)).slice(0,4)
