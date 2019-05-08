@@ -13,7 +13,7 @@ class PluginContext(
     }
 
     fun respond(response: String) {
-        runBlocking { responder("PRIVMSG ${IrcConfig.channel} $response") }
+        runBlocking { responder("PRIVMSG ${IrcConfig.channel} :$response") }
     }
 
     fun configString(key: String): String? = ConfigurationFile.stringValue(key)

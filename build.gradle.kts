@@ -29,6 +29,20 @@ application {
     applicationName = "kotbot"
 }
 
+val fatJar = task("fatJar", type = Jar::class) {
+    manifest {
+        attributes["Main-Class"] = "us.kesslern.kotbot.MainKt"
+    }
+    from(Callable { configurations["runtimeClasspath"].map { if (it.isDirectory) it else zipTree(it) } })
+    with(tasks["jar"] as CopySpec)
+}
+
+tasks {
+    "build" {
+        dependsOn(fatJar)
+    }
+}
+
 val compileKotlin: KotlinCompile by tasks
 compileKotlin.kotlinOptions {
     jvmTarget = "1.8"
