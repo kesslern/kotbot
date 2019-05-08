@@ -5,6 +5,7 @@ import io.ktor.client.call.call
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.response.readText
 import io.ktor.util.KtorExperimentalAPI
+import io.ktor.util.error
 import kotlinx.coroutines.runBlocking
 import org.graalvm.polyglot.Context
 
@@ -43,8 +44,16 @@ data class KotbotMessage (
 class KotBot private constructor(
         private val connection: IrcConnection
 ) {
-
-    private val kotbotEventHandlers = mutableListOf<suspend (KotbotMessage) -> Unit>()
+    private val shellContext: Context = Context.newBuilder().build()
+    private val kotbotEventHandlers = mutableListOf<suspend (KotbotMessage) -> Unit>(
+            {
+              if (it.text.startsWith("py ")) {
+                  connection.write("PRIVMSG ${IrcConfig.channel} :" + shellContext.eval("python", it.text.substring(3)))
+              } else if (it.text.startsWith("js ")) {
+                  connection.write("PRIVMSG ${IrcConfig.channel} :" + shellContext.eval("js", it.text.substring(3)))
+              }
+            }
+    )
 
     private val ircEventHandlers = listOf<suspend (ServerMessage) -> Unit>(
             {
@@ -74,7 +83,7 @@ class KotBot private constructor(
                     val channel = it.parameters[0]
                     val text = it.parameters[1]
                     val message = KotbotMessage(channel, text)
-                    kotbotEventHandlers.forEach { try { it(message) } catch (e: Exception) {} }
+                    kotbotEventHandlers.forEach { try { it(message) } catch (e: Exception) { logger.error(e) } }
                 }
             }
     )
