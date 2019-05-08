@@ -1,7 +1,9 @@
 package us.kesslern.kotbot
 
 data class ServerMessage(
-        @JvmField val prefix: String?,
+        @JvmField var name: String?,
+        @JvmField var user: String?,
+        @JvmField var host: String?,
         @JvmField val command: String,
         @JvmField val parameters: List<String>
 )
@@ -16,13 +18,23 @@ class MessageParser private constructor() {
     fun parse(): ServerMessage = parseMessage()
 
     private fun parseMessage(): ServerMessage {
-        var prefix: String? = null
+        var name: String? = null
+        var user: String? = null
+        var host: String? = null
         val command: String?
 
         // Parse the prefix
         if (scanner.isCurrent(':')) {
             scanner.consume(':')
-            prefix = parsePrefix()
+            name = scanner.consumeWhile { !scanner.isCurrent(' ', '!', '@') }
+            if (scanner.isCurrent('!')) {
+                scanner.consume('!')
+                user = scanner.consumeWhile { !scanner.isCurrent(' ', '@') }
+            }
+            if (scanner.isCurrent('@')) {
+                scanner.consume('@')
+                host = scanner.consumeWhile { !scanner.isCurrent(' ') }
+            }
             scanner.consume(' ')
         }
 
@@ -34,7 +46,9 @@ class MessageParser private constructor() {
         }
 
         return ServerMessage(
-                prefix = prefix,
+                name = name,
+                user = user,
+                host = host,
                 command = command,
                 parameters = params
         )
