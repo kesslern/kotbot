@@ -1,19 +1,32 @@
 package us.kesslern.kotbot
 
+import io.ktor.client.HttpClient
+import io.ktor.client.call.call
+import io.ktor.client.engine.cio.CIO
+import io.ktor.client.response.readText
 import io.ktor.util.KtorExperimentalAPI
 import kotlinx.coroutines.runBlocking
 import org.graalvm.polyglot.Context
 
+@KtorExperimentalAPI
 class PluginContext(
         val eventHandlerAdder:  (suspend (KotbotMessage) -> Unit) -> Unit,
         val responder: suspend (String) -> Unit
 ) {
+    private val client = HttpClient(CIO)
+
     fun addEventHandler(handler: suspend (KotbotMessage) -> Unit) {
         eventHandlerAdder(handler)
     }
 
     fun respond(response: String) {
         runBlocking { responder("PRIVMSG ${IrcConfig.channel} :$response") }
+    }
+
+    fun request(url: String): String {
+        return runBlocking {
+            client.call(url).response.readText()
+        }
     }
 
     fun configString(key: String): String? = ConfigurationFile.stringValue(key)
@@ -90,6 +103,14 @@ class KotBot private constructor(
             if (message.text == "javascript") {
                 context.respond("hi from javascript")
             }
+            if (message.text.startsWith("weather")) {
+                const zip = message.text.split(" ")[1]
+                if (!zip) return
+                const key = context.configString("openweathermap")
+                const weather = JSON.parse(context.request("http://api.openweathermap.org/data/2.5/weather?zip=" + zip + "&APPID=" + key))
+                const temp = ("" + ((weather.main.temp - 273.15) * 9/5 + 32)).slice(0,4)
+                context.respond(`${"$"}{weather.name} is ${"$"}{weather.weather[0].main}, ${"$"}{temp} degrees`)
+            }
         })
         """)
 
@@ -97,8 +118,7 @@ class KotBot private constructor(
 import polyglot
 context = polyglot.import_value('context')
 
-def hello(message, idk):
-   print(type(idk))
+def hello(message, _):
    if message.text == "python":
        context.respond("hi from python")
 

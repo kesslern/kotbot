@@ -11,6 +11,8 @@ version = "1.0-SNAPSHOT"
 dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.2.1")
     implementation("io.ktor:ktor-network:1.1.4")
+    implementation("io.ktor:ktor-client-core:1.1.4")
+    implementation("io.ktor:ktor-client-cio:1.1.4")
     implementation("io.github.microutils:kotlin-logging:1.6.24")
     implementation("ch.qos.logback:logback-classic:1.2.+")
     implementation("org.graalvm.sdk:graal-sdk:1.0.0-rc16")

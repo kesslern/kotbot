@@ -4,5 +4,6 @@
   "channel": "#example",
   "port": 6667,
   "identify_password": "",
-  "identify_owner": ""
+  "identify_owner": "",
+  "openweathermap": ""
 }

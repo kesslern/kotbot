@@ -7,9 +7,6 @@ An IRC bot written in Kotlin, using raw sockets backed by Ktor. Using GraalVM, p
 ```
 
 ## TODO 
-- Figure out how to make, configure, and run a distributable jar
-- Allow plugins to make HTTP requests
 - Read plugins from directories
-- Implement a basic weather plugin
 - Create NoSQL style database interface for plugins
 - Add JS and python shell with sandboxed environment
