@@ -7,6 +7,5 @@ An IRC bot written in Kotlin, using raw sockets backed by Ktor. Using GraalVM, p
 ```
 
 ## TODO 
-- Read plugins from directories
 - Create NoSQL style database interface for plugins
 - Add JS and python shell with sandboxed environment

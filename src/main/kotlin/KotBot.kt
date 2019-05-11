@@ -103,35 +103,8 @@ class KotBot private constructor(
     }
 
     init {
-        val polyglotContext = Context.newBuilder().allowAllAccess(true).build()
         val pluginContext = PluginContext(eventHandlerAdder = ::addKotbotEventHandler, responder = connection::write)
-        polyglotContext.polyglotBindings.putMember("context", pluginContext)
-        polyglotContext.eval("js", """
-            var context = Polyglot.import('context')
-            context.addEventHandler((message) => {
-            if (message.text == "javascript") {
-                context.respond("hi from javascript")
-            }
-            if (message.text.startsWith("weather")) {
-                const zip = message.text.split(" ")[1]
-                const key = context.configString("openweathermap")
-                const weather = JSON.parse(context.request("http://api.openweathermap.org/data/2.5/weather?zip=" + zip + "&APPID=" + key))
-                const temp = ("" + ((weather.main.temp - 273.15) * 9/5 + 32)).slice(0,4)
-                context.respond(`${"$"}{weather.name} is ${"$"}{weather.weather[0].main}, ${"$"}{temp} degrees`)
-            }
-        })
-        """)
-
-        polyglotContext.eval("python", """
-import polyglot
-context = polyglot.import_value('context')
-
-def hello(message, _):
-   if message.text == "python":
-       context.respond("hi from python")
-
-context.addEventHandler(hello)
-        """)
+        Plugins.run(pluginContext)
     }
 
     private suspend fun run() {
