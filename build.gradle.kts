@@ -35,7 +35,7 @@ val fatJar = task("fatJar", type = Jar::class) {
     manifest {
         attributes["Main-Class"] = "us.kesslern.kotbot.MainKt"
     }
-    from(Callable { configurations["runtimeClasspath"].map { if (it.isDirectory) it else zipTree(it) } })
+    from({ configurations["runtimeClasspath"].map { if (it.isDirectory) it else zipTree(it) } })
     with(tasks["jar"] as CopySpec)
 }
 

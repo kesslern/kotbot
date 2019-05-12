@@ -8,4 +8,8 @@ An IRC bot written in Kotlin, using raw sockets backed by Ktor. Using GraalVM, p
 
 ## TODO 
 - Create NoSQL style database interface for plugins
-- Add JS and python shell with sandboxed environment
+- Add configurable prefix command
+  - Parse command from prefix and add it to event passed to plugins
+  - Pre-parse the rest of the text after the space
+- Simplify responding to the user who issued the command
+- SImplify responding in general to the whole channel
