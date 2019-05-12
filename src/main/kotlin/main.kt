@@ -19,12 +19,17 @@ fun main() = runBlocking {
     KotBot.create()
 }
 
+data class Plugin(
+        val name: String,
+        val language: String,
+        val body: String
+)
+
 @KtorExperimentalAPI
 object Plugins {
     private val pluginDir: File = File("plugins")
 
-    private val jsPlugins = mutableMapOf<String, String>()
-    private val pythonPlugins = mutableMapOf<String, String>()
+    private val plugins = mutableListOf<Plugin>()
 
     init {
         if (!pluginDir.isDirectory) {
@@ -38,11 +43,8 @@ object Plugins {
     fun run(context: PluginContext) {
         val polyglotContext = Context.newBuilder().allowAllAccess(true).build()
         polyglotContext.polyglotBindings.putMember("context", context)
-        jsPlugins.forEach { (_, script) ->
-            polyglotContext.eval("js", script)
-        }
-        pythonPlugins.forEach { (_, script) ->
-            polyglotContext.eval("python", script)
+        plugins.forEach {
+            polyglotContext.eval(it.language, it.body)
         }
     }
 
@@ -50,12 +52,18 @@ object Plugins {
         val jsDir = pluginDir.openRelative("js")
         if (!jsDir.isDirectory) {
             logger.warn("Unable to locate javascript plugins folder.")
-            logger.warn("Not loading python plugins.")
+            logger.warn("Not loading javascript plugins.")
             return
         }
         jsDir.listFiles().forEach {
             logger.info("Loading js plugin: ${it.name}")
-            jsPlugins[it.name] = it.readText(Charsets.UTF_8)
+            plugins.add(
+                    Plugin(
+                            name = it.name,
+                            language = "js",
+                            body = it.readText(Charsets.UTF_8)
+                    )
+            )
         }
     }
 
@@ -66,9 +74,16 @@ object Plugins {
             logger.warn("Not loading python plugins.")
             return
         }
+
         pythonDir.listFiles().forEach {
             logger.info("Loading python plugin: ${it.name}")
-            pythonPlugins[it.name] = it.readText(Charsets.UTF_8)
+            plugins.add(
+                    Plugin(
+                            name = it.name,
+                            language = "python",
+                            body = it.readText(Charsets.UTF_8)
+                    )
+            )
         }
     }
 }
