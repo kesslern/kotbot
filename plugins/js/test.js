@@ -1,4 +1,3 @@
-var context = Polyglot.import('context')
 context.addEventHandler((event) => {
     if (event.message == "javascript") {
         context.respond("hi from javascript")

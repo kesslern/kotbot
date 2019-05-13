@@ -15,6 +15,16 @@ data class Plugin(
         val body: String
 )
 
+val PluginHeaders = mapOf(
+        "js" to """
+            const context = Polyglot.import('context')
+        """.trimIndent(),
+        "python" to """
+            import polyglot
+            context = polyglot.import_value('context')
+        """.trimIndent()
+)
+
 /**
  * Singleton object for loading and running plugins.
  */
@@ -39,6 +49,9 @@ object Plugins {
     fun run(context: PluginContext) {
         val polyglotContext = Context.newBuilder().allowAllAccess(true).build()
         polyglotContext.polyglotBindings.putMember("context", context)
+        PluginHeaders.forEach { (language, header) ->
+            polyglotContext.eval(language, header)
+        }
         plugins.forEach {
             polyglotContext.eval(it.language, it.body)
         }

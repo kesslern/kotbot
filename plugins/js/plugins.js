@@ -1,4 +1,3 @@
-var context = Polyglot.import('context')
 context.addEventHandler(event => {
     if (event.command === "catfact") {
         const fact = JSON.parse(context.request("https://cat-fact.herokuapp.com/facts/random"))
