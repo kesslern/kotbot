@@ -8,7 +8,6 @@ An IRC bot written in Kotlin, using raw sockets backed by Ktor. Using GraalVM, p
 
 ## TODO 
 - Create NoSQL style database interface for plugins
-- Refactor classes into sensible files
 - Add some comments/doc describing purpose/structure of classes
 - Add configurable prefix command
   - Parse command from prefix and add it to event passed to plugins

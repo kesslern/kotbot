@@ -9,32 +9,6 @@ import io.ktor.util.error
 import kotlinx.coroutines.runBlocking
 import org.graalvm.polyglot.Context
 
-@KtorExperimentalAPI
-class PluginContext(
-        val eventHandlerAdder:  (suspend (KotbotMessage) -> Unit) -> Unit,
-        val responder: suspend (String) -> Unit
-) {
-    private val client = HttpClient(CIO)
-
-    fun addEventHandler(handler: suspend (KotbotMessage) -> Unit) {
-        eventHandlerAdder(handler)
-    }
-
-    fun respond(response: String) {
-        runBlocking { responder("PRIVMSG ${IrcConfig.channel} :$response") }
-    }
-
-    fun request(url: String): String {
-        return runBlocking {
-            client.call(url).response.readText()
-        }
-    }
-
-    fun configString(key: String): String? = ConfigurationFile.stringValue(key)
-
-    fun configInt(key: String): Int? = ConfigurationFile.intValue(key)
-}
-
 data class KotbotMessage (
     @JvmField val source: String,
     @JvmField val text: String
