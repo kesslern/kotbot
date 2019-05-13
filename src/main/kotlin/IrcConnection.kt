@@ -6,7 +6,6 @@ import io.ktor.util.KtorExperimentalAPI
 class IrcConnection(
         private val connection: RawSocketConnection
 ) {
-
     /**
      * Indicates if the IRC connection has identified and registered with the server.
      */

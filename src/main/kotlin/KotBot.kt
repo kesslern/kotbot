@@ -25,9 +25,28 @@ class KotBot private constructor(
     private val shellContext: Context = Context.newBuilder().build()
 
     /**
+     * An event handler for IrcConnection, which processes a ServerEvent into a KotBotEvent and passes the event to
+     * each KotBotEventHandler.
+     */
+    private val kotBotEventCaller: suspend (ServerEvent) -> Unit = {
+        if (it.command == "PRIVMSG") {
+            val channel = it.parameters[0]
+            val text = it.parameters[1]
+            val message = KotBotEvent(channel, text)
+            this.eventHandlers.forEach {
+                try {
+                    it(message)
+                } catch (e: Exception) {
+                    logger.error(e)
+                }
+            }
+        }
+    }
+
+    /**
      * Event handlers that process KotBot events.
      */
-    private val kotbotEventHandlers = mutableListOf<suspend (KotBotEvent) -> Unit>(
+    private val eventHandlers = mutableListOf<suspend (KotBotEvent) -> Unit>(
             {
               if (it.text.startsWith("py ")) {
                   connection.write("PRIVMSG ${IrcConfig.channel} :" + shellContext.eval("python", it.text.substring(3)))
@@ -38,26 +57,19 @@ class KotBot private constructor(
     )
 
     init {
-        val pluginContext = PluginContext(eventHandlerAdder = ::addKotBotEventHandler, responder = connection::write)
+        val pluginContext = PluginContext(eventHandlerAdder = ::addEventHandler, responder = connection::write)
         Plugins.run(pluginContext)
     }
 
-    private fun addKotBotEventHandler(handler: suspend (KotBotEvent) -> Unit) {
-        kotbotEventHandlers.add(handler)
+    private fun addEventHandler(handler: suspend (KotBotEvent) -> Unit) {
+        eventHandlers.add(handler)
     }
 
     companion object {
         suspend fun create() {
             val connection = IrcConnection.create()
             val kotBot = KotBot(connection)
-            connection.addEventHandler {
-                if (it.command == "PRIVMSG") {
-                    val channel = it.parameters[0]
-                    val text = it.parameters[1]
-                    val message = KotBotEvent(channel, text)
-                    kotBot.kotbotEventHandlers.forEach { try { it(message) } catch (e: Exception) { logger.error(e) } }
-                }
-            }
+            connection.addEventHandler(kotBot.kotBotEventCaller)
             connection.run()
         }
     }
