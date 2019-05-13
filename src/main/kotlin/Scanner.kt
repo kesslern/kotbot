@@ -1,5 +1,8 @@
 package us.kesslern.kotbot
 
+/**
+ * A scanner to provide helpful parsing methods over a string while maintaining the current position in the string.
+ */
 class Scanner(
         private val message: String
 ) {

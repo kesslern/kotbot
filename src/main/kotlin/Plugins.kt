@@ -15,12 +15,18 @@ data class Plugin(
         val body: String
 )
 
+/**
+ * Singleton object for loading and running plugins.
+ */
 @KtorExperimentalAPI
 object Plugins {
     private val pluginDir: File = File("plugins")
 
     private val plugins = mutableListOf<Plugin>()
 
+    /**
+     * Load all plugins on initialization.
+     */
     init {
         if (!pluginDir.isDirectory) {
             logger.error("Expected plugins directory to exist")
@@ -58,14 +64,18 @@ object Plugins {
     }
 }
 
+/**
+ * An instance of this class is created and passed to the plugin context. Each plugin has access to this context.
+ * This class is the bridge between Kotlin code and the plugins.
+ */
 @KtorExperimentalAPI
 class PluginContext(
-        val eventHandlerAdder:  (suspend (KotbotMessage) -> Unit) -> Unit,
+        val eventHandlerAdder:  (suspend (KotBotEvent) -> Unit) -> Unit,
         val responder: suspend (String) -> Unit
 ) {
     private val client = HttpClient(CIO)
 
-    fun addEventHandler(handler: suspend (KotbotMessage) -> Unit) {
+    fun addEventHandler(handler: suspend (KotBotEvent) -> Unit) {
         eventHandlerAdder(handler)
     }
 

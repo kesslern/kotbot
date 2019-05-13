@@ -6,8 +6,6 @@ import mu.KotlinLogging
 
 val logger = KotlinLogging.logger {}
 
-var registered = false
-
 @KtorExperimentalAPI
 fun main() = runBlocking {
     Plugins

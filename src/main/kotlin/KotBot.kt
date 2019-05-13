@@ -1,25 +1,39 @@
 package us.kesslern.kotbot
 
-import io.ktor.client.HttpClient
-import io.ktor.client.call.call
-import io.ktor.client.engine.cio.CIO
-import io.ktor.client.response.readText
 import io.ktor.util.KtorExperimentalAPI
 import io.ktor.util.error
-import kotlinx.coroutines.runBlocking
 import org.graalvm.polyglot.Context
 
-data class KotbotMessage (
+/**
+ * An event that is passed to plugins and built-in bot event handlers.
+ */
+data class KotBotEvent (
     @JvmField val source: String,
     @JvmField val text: String
 )
 
+/**
+ * The main IRC bot. Establishes a connection, joins a channel, and loads the plugins.
+ */
 @KtorExperimentalAPI
 class KotBot private constructor(
-        private val connection: IrcConnection
+        private val connection: RawSocketConnection
 ) {
+
+    /**
+     * Indicates if the IRC bot has identified and registered with the server.
+     */
+    private var registered = false
+
+    /**
+     * A polyglot context for running shell commands. Does not provide any filesystem access.
+     */
     private val shellContext: Context = Context.newBuilder().build()
-    private val kotbotEventHandlers = mutableListOf<suspend (KotbotMessage) -> Unit>(
+
+    /**
+     * Event handlers that process KotBot events.
+     */
+    private val kotbotEventHandlers = mutableListOf<suspend (KotBotEvent) -> Unit>(
             {
               if (it.text.startsWith("py ")) {
                   connection.write("PRIVMSG ${IrcConfig.channel} :" + shellContext.eval("python", it.text.substring(3)))
@@ -29,7 +43,10 @@ class KotBot private constructor(
             }
     )
 
-    private val ircEventHandlers = listOf<suspend (ServerMessage) -> Unit>(
+    /**
+     * Event handlers that process events from the IRC server.
+     */
+    private val ircEventHandlers = listOf<suspend (ServerEvent) -> Unit>(
             {
                 if (it.command == "PING") {
                     val pong = "PONG ${it.parameters.first()}"
@@ -55,28 +72,14 @@ class KotBot private constructor(
                 if (it.command == "PRIVMSG") {
                     val channel = it.parameters[0]
                     val text = it.parameters[1]
-                    val message = KotbotMessage(channel, text)
+                    val message = KotBotEvent(channel, text)
                     kotbotEventHandlers.forEach { try { it(message) } catch (e: Exception) { logger.error(e) } }
                 }
             }
     )
 
-    private fun addKotbotEventHandler(handler: suspend (KotbotMessage) -> Unit) {
-        kotbotEventHandlers.add(handler)
-    }
-
-    companion object {
-        suspend fun create() {
-            val connection = IrcConnection.connect(
-                    hostname = IrcConfig.hostname,
-                    port = IrcConfig.port
-            )
-            KotBot(connection).run()
-        }
-    }
-
     init {
-        val pluginContext = PluginContext(eventHandlerAdder = ::addKotbotEventHandler, responder = connection::write)
+        val pluginContext = PluginContext(eventHandlerAdder = ::addKotBotEventHandler, responder = connection::write)
         Plugins.run(pluginContext)
     }
 
@@ -84,13 +87,23 @@ class KotBot private constructor(
         while (!connection.isClosedForRead()) {
             logger.info("Reading...")
 
-            val response = MessageParser(connection.readLine()).parse()
+            val response = MessageParser.parse(connection.readLine())
             logger.info("Server said: '$response}'")
-            eventHandler(response)
+            ircEventHandlers.forEach { it(response) }
         }
     }
 
-    private suspend fun eventHandler(event: ServerMessage) {
-        ircEventHandlers.forEach { it(event) }
+    private fun addKotBotEventHandler(handler: suspend (KotBotEvent) -> Unit) {
+        kotbotEventHandlers.add(handler)
+    }
+
+    companion object {
+        suspend fun create() {
+            val connection = RawSocketConnection.connect(
+                    hostname = IrcConfig.hostname,
+                    port = IrcConfig.port
+            )
+            KotBot(connection).run()
+        }
     }
 }

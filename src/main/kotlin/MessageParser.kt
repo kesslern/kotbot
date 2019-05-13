@@ -1,23 +1,34 @@
 package us.kesslern.kotbot
 
-data class ServerMessage(
+/**
+ * A parsed message from the server.
+ * Refer to https://tools.ietf.org/html/rfc2812#section-2.3.1 for details.
+ */
+data class ServerEvent(
+        /** Servername or username from prefix. */
         @JvmField var name: String?,
+        /** User from prefix. */
         @JvmField var user: String?,
+        /** Host from prefix. */
         @JvmField var host: String?,
+        /** Command from message. */
         @JvmField val command: String,
+        /** List of parsed parameters. */
         @JvmField val parameters: List<String>
 )
 
+/**
+ * Parser for raw messages from the IRC server.
+ * Refer to https://tools.ietf.org/html/rfc2812#section-2.3.1 for details.
+ */
 class MessageParser private constructor() {
     private lateinit var scanner: Scanner
 
-    constructor(message: String) : this() {
+    private constructor(message: String) : this() {
         scanner = Scanner(message)
     }
 
-    fun parse(): ServerMessage = parseMessage()
-
-    private fun parseMessage(): ServerMessage {
+    private fun parseMessage(): ServerEvent {
         var name: String? = null
         var user: String? = null
         var host: String? = null
@@ -45,7 +56,7 @@ class MessageParser private constructor() {
             params += parseParam()
         }
 
-        return ServerMessage(
+        return ServerEvent(
                 name = name,
                 user = user,
                 host = host,
@@ -73,7 +84,7 @@ class MessageParser private constructor() {
     }
 
     private fun isNotSpCrLfCl(): Boolean = !scanner.isCurrent('\r', '\n', ' ', ':', '\u0000')
-    
+
     private fun parseCommand(): String {
         return when {
             scanner.isCurrentLetter() ->
@@ -82,5 +93,9 @@ class MessageParser private constructor() {
                 scanner.consumeWhile { scanner.isCurrentDigit() }
             else -> throw RuntimeException("No command")
         }
+    }
+
+    companion object {
+        fun parse(message: String) = MessageParser(message).parseMessage()
     }
 }

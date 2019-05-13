@@ -4,6 +4,9 @@ import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Parser
 import java.io.FileNotFoundException
 
+/**
+ * Convenience object for loading the KotBot config and retrieving values.
+ */
 object ConfigurationFile {
     private val json: JsonObject
 
@@ -16,11 +19,17 @@ object ConfigurationFile {
         }
     }
 
+    /**
+     * Retrieve a string value by key. If the key does not exist or the value is blank, `null` is returned.
+     */
     fun stringValue(key: String): String? {
         val value = json.string(key)
         return if (value?.isBlank() == true) null else value
     }
 
+    /**
+     * Retrieve a string value by key. If the key does nto exist or the value is blank, a RuntimeException is thrown.
+     */
     fun requiredStringValue(key: String): String {
         return stringValue(key) ?: throw RuntimeException("Missing required config for $key")
     }
@@ -30,6 +39,9 @@ object ConfigurationFile {
     fun requiredIntValue(key: String): Int = intValue(key) ?: throw RuntimeException("Missing required config for $key")
 }
 
+/**
+ * All configuration values used for KotBot and its IRC configuration.
+ */
 object IrcConfig {
     val username = ConfigurationFile.requiredStringValue("username")
     val hostname = ConfigurationFile.requiredStringValue("hostname")
