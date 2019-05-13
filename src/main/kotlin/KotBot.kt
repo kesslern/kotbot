@@ -17,14 +17,8 @@ data class KotBotEvent (
  */
 @KtorExperimentalAPI
 class KotBot private constructor(
-        private val connection: RawSocketConnection
+        private val connection: IrcConnection
 ) {
-
-    /**
-     * Indicates if the IRC bot has identified and registered with the server.
-     */
-    private var registered = false
-
     /**
      * A polyglot context for running shell commands. Does not provide any filesystem access.
      */
@@ -43,54 +37,9 @@ class KotBot private constructor(
             }
     )
 
-    /**
-     * Event handlers that process events from the IRC server.
-     */
-    private val ircEventHandlers = listOf<suspend (ServerEvent) -> Unit>(
-            {
-                if (it.command == "PING") {
-                    val pong = "PONG ${it.parameters.first()}"
-                    connection.write(pong)
-                }
-            },
-            {
-                if (it.command == "001") {
-                    if (IrcConfig.identifyPassword != null) {
-                        connection.write("PRIVMSG NickServ :IDENTIFY ${IrcConfig.identifyOwner} ${IrcConfig.identifyPassword}")
-                    }
-                    connection.write("JOIN ${IrcConfig.channel}")
-                }
-            },
-            {
-                if (it.command == "NOTICE" && !registered) {
-                    registered = true
-                    connection.write("NICK ${IrcConfig.username}")
-                    connection.write("USER ${IrcConfig.username} 0 * :${IrcConfig.username}")
-                }
-            },
-            {
-                if (it.command == "PRIVMSG") {
-                    val channel = it.parameters[0]
-                    val text = it.parameters[1]
-                    val message = KotBotEvent(channel, text)
-                    kotbotEventHandlers.forEach { try { it(message) } catch (e: Exception) { logger.error(e) } }
-                }
-            }
-    )
-
     init {
         val pluginContext = PluginContext(eventHandlerAdder = ::addKotBotEventHandler, responder = connection::write)
         Plugins.run(pluginContext)
-    }
-
-    private suspend fun run() {
-        while (!connection.isClosedForRead()) {
-            logger.info("Reading...")
-
-            val response = MessageParser.parse(connection.readLine())
-            logger.info("Server said: '$response}'")
-            ircEventHandlers.forEach { it(response) }
-        }
     }
 
     private fun addKotBotEventHandler(handler: suspend (KotBotEvent) -> Unit) {
@@ -99,11 +48,17 @@ class KotBot private constructor(
 
     companion object {
         suspend fun create() {
-            val connection = RawSocketConnection.connect(
-                    hostname = IrcConfig.hostname,
-                    port = IrcConfig.port
-            )
-            KotBot(connection).run()
+            val connection = IrcConnection.create()
+            val kotBot = KotBot(connection)
+            connection.addEventHandler {
+                if (it.command == "PRIVMSG") {
+                    val channel = it.parameters[0]
+                    val text = it.parameters[1]
+                    val message = KotBotEvent(channel, text)
+                    kotBot.kotbotEventHandlers.forEach { try { it(message) } catch (e: Exception) { logger.error(e) } }
+                }
+            }
+            connection.run()
         }
     }
 }
