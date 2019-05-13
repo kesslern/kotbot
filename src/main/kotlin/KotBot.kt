@@ -7,9 +7,11 @@ import org.graalvm.polyglot.Context
 /**
  * An event that is passed to plugins and built-in bot event handlers.
  */
-data class KotBotEvent (
-    @JvmField val source: String,
-    @JvmField val text: String
+data class KotBotEvent(
+        @JvmField val message: String,
+        @JvmField val source: String,
+        @JvmField val command: String?,
+        @JvmField val body: String?
 )
 
 /**
@@ -30,12 +32,27 @@ class KotBot private constructor(
      */
     private val kotBotEventCaller: suspend (ServerEvent) -> Unit = {
         if (it.command == "PRIVMSG") {
-            val channel = it.parameters[0]
-            val text = it.parameters[1]
-            val message = KotBotEvent(channel, text)
+            val source = it.parameters[0]
+            val message = it.parameters[1]
+            val splitMessage = message.split(" ")
+            var command: String? = null
+            var body: String? = null
+
+            if (splitMessage[0].startsWith(IrcConfig.commandPrefix)){
+                command = splitMessage[0].substring(IrcConfig.commandPrefix.length)
+                body = message.substring(command.length + 1)
+            }
+
+            val event = KotBotEvent(
+                    source = source,
+                    message = message,
+                    command = command,
+                    body = body
+            )
+
             this.eventHandlers.forEach {
                 try {
-                    it(message)
+                    it(event)
                 } catch (e: Exception) {
                     logger.error(e)
                 }
@@ -48,11 +65,11 @@ class KotBot private constructor(
      */
     private val eventHandlers = mutableListOf<suspend (KotBotEvent) -> Unit>(
             {
-              if (it.text.startsWith("py ")) {
-                  connection.write("PRIVMSG ${IrcConfig.channel} :" + shellContext.eval("python", it.text.substring(3)))
-              } else if (it.text.startsWith("js ")) {
-                  connection.write("PRIVMSG ${IrcConfig.channel} :" + shellContext.eval("js", it.text.substring(3)))
-              }
+                if (it.command == "py") {
+                    connection.write("PRIVMSG ${IrcConfig.channel} :" + shellContext.eval("python", it.body))
+                } else if (it.command == "js") {
+                    connection.write("PRIVMSG ${IrcConfig.channel} :" + shellContext.eval("js", it.body))
+                }
             }
     )
 
