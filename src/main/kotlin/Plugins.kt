@@ -78,8 +78,8 @@ object Plugins {
 }
 
 /**
- * An instance of this class is created and passed to the plugin context. Each plugin has access to this context.
- * This class is the bridge between Kotlin code and the plugins.
+ * An instance of this class is created and passed to the environment plugins run in. Each plugin has access to this
+ * context object. This class is the bridge between Kotlin code and the plugins.
  */
 @KtorExperimentalAPI
 class PluginContext(
