@@ -1,5 +1,5 @@
 context.addEventHandler((event) => {
-    if (event.message == "javascript") {
+    if (event.message === "javascript") {
         context.respond("hi from javascript")
     }
     if (event.command === "weather") {
