@@ -93,7 +93,9 @@ class PluginContext(
     }
 
     fun respond(response: String) {
-        runBlocking { responder("PRIVMSG ${IrcConfig.channel} :$response") }
+        runBlocking {
+            responder("PRIVMSG ${IrcConfig.channel} :$response")
+        }
     }
 
     fun request(url: String): String {

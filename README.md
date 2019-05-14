@@ -7,7 +7,6 @@ An IRC bot written in Kotlin, using raw sockets backed by Ktor. Using GraalVM, p
 ```
 
 ## TODO
-- Fix ' chars that display as ? from API responses
 - Support responding to users in PMs
 - Add help command
   - Plugins can add commands with a description

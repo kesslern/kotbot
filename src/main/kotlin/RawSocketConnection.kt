@@ -52,7 +52,7 @@ class RawSocketConnection private constructor() {
     suspend fun write(data: String) {
         val dataWithLineEndings = if (data.endsWith("\r\n")) data else data + "\r\n"
         logger.info("Writing: ${dataWithLineEndings.trim()}")
-        output.write(dataWithLineEndings, Charsets.US_ASCII)
+        output.write(dataWithLineEndings, Charsets.UTF_8)
     }
 
     fun isClosedForRead() = input.isClosedForRead
