@@ -7,7 +7,6 @@ An IRC bot written in Kotlin, using raw sockets backed by Ktor. Using GraalVM, p
 ```
 
 ## TODO
-- Support responding to users in PMs
 - Add help command
   - Plugins can add commands with a description
   - help lists commands, or help with a command gets a specific description

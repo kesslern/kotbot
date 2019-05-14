@@ -66,7 +66,10 @@ class KotBot private constructor(
                         GlobalScope.launch { connection.say(source, it) }
                     },
                     responder = {
-                        GlobalScope.launch { connection.say(source, "${event.name}: $it") }
+                        val privateMessage = source == IrcConfig.username
+                        val location = if (privateMessage) event.name!! else source
+                        val prefix = if (!privateMessage) "${event.name}: " else ""
+                        GlobalScope.launch { connection.say(location, "$prefix$it") }
                     }
             )
 
