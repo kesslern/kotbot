@@ -84,7 +84,7 @@ object Plugins {
 @KtorExperimentalAPI
 class PluginContext(
         val eventHandlerAdder:  (suspend (KotBotEvent) -> Unit) -> Unit,
-        val responder: suspend (String) -> Unit
+        val sayer: suspend (String, String) -> Unit
 ) {
     private val client = HttpClient(CIO)
 
@@ -92,9 +92,9 @@ class PluginContext(
         eventHandlerAdder(handler)
     }
 
-    fun respond(response: String) {
+    fun say(location: String, message: String) {
         runBlocking {
-            responder("PRIVMSG ${IrcConfig.channel} :$response")
+            sayer(location, message)
         }
     }
 

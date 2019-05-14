@@ -2,6 +2,8 @@ package us.kesslern.kotbot
 
 import io.ktor.util.KtorExperimentalAPI
 import io.ktor.util.error
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import org.graalvm.polyglot.Context
 
 /**
@@ -11,8 +13,19 @@ data class KotBotEvent(
         @JvmField val message: String,
         @JvmField val source: String,
         @JvmField val command: String?,
-        @JvmField val body: String?
-)
+        @JvmField val body: String?,
+        @JvmField val name: String,
+        @JvmField val sayer: (String) -> Unit,
+        @JvmField val responder: (String) -> Unit
+) {
+    fun say(message: String) {
+        sayer(message)
+    }
+
+    fun respond(message: String) {
+        responder(message)
+    }
+}
 
 /**
  * The main IRC bot. Establishes a connection, joins a channel, and loads the plugins.
@@ -30,10 +43,10 @@ class KotBot private constructor(
      * An event handler for IrcConnection, which processes a ServerEvent into a KotBotEvent and passes the event to
      * each KotBotEventHandler.
      */
-    private val kotBotEventCaller: suspend (ServerEvent) -> Unit = {
-        if (it.command == "PRIVMSG") {
-            val source = it.parameters[0]
-            val message = it.parameters[1]
+    private val kotBotEventCaller: suspend (ServerEvent) -> Unit = { event ->
+        if (event.command == "PRIVMSG") {
+            val source = event.parameters[0]
+            val message = event.parameters[1]
             val splitMessage = message.split(" ")
             var command: String? = null
             var body: String? = null
@@ -43,16 +56,23 @@ class KotBot private constructor(
                 body = message.substring(command.length + 1)
             }
 
-            val event = KotBotEvent(
+            val kotBotEvent = KotBotEvent(
                     source = source,
                     message = message,
                     command = command,
-                    body = body
+                    body = body,
+                    name = event.name!!,
+                    sayer = {
+                        GlobalScope.launch { connection.say(source, it) }
+                    },
+                    responder = {
+                        GlobalScope.launch { connection.say(source, "${event.name}: $it") }
+                    }
             )
 
             this.eventHandlers.forEach {
                 try {
-                    it(event)
+                    it(kotBotEvent)
                 } catch (e: Exception) {
                     logger.error(e)
                 }
@@ -66,15 +86,15 @@ class KotBot private constructor(
     private val eventHandlers = mutableListOf<suspend (KotBotEvent) -> Unit>(
             {
                 if (it.command == "py") {
-                    connection.write("PRIVMSG ${IrcConfig.channel} :" + shellContext.eval("python", it.body))
+                    connection.say(it.source, "${it.name}: " + shellContext.eval("python", it.body))
                 } else if (it.command == "js") {
-                    connection.write("PRIVMSG ${IrcConfig.channel} :" + shellContext.eval("js", it.body))
+                    connection.say(it.source, "${it.name}: " + shellContext.eval("js", it.body))
                 }
             }
     )
 
     init {
-        val pluginContext = PluginContext(eventHandlerAdder = ::addEventHandler, responder = connection::write)
+        val pluginContext = PluginContext(eventHandlerAdder = ::addEventHandler, sayer = connection::say)
         Plugins.run(pluginContext)
     }
 

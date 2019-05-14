@@ -7,6 +7,6 @@ context.addEventHandler((event) => {
         const key = context.configString("openweathermap")
         const weather = JSON.parse(context.request("http://api.openweathermap.org/data/2.5/weather?zip=" + zip + "&APPID=" + key))
         const temp = ("" + ((weather.main.temp - 273.15) * 9 / 5 + 32)).slice(0, 4)
-        context.respond(`${weather.name} is ${weather.weather[0].main}, ${temp} degrees`)
+        event.respond(`${weather.name} is ${weather.weather[0].main}, ${temp} degrees`)
     }
 })

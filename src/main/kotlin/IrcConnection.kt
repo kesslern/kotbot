@@ -39,7 +39,11 @@ class IrcConnection(
 
     )
 
-    suspend fun write(data: String) = connection.write(data)
+    private suspend fun write(data: String) = connection.write(data)
+
+    suspend fun say(location: String, message: String) {
+        write("PRIVMSG $location :$message")
+    }
 
     fun addEventHandler(eventHandler: suspend (ServerEvent) -> Unit) = eventHandlers.add(eventHandler)
 
