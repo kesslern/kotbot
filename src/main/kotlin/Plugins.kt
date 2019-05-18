@@ -42,8 +42,8 @@ object Plugins {
             logger.error("Expected plugins directory to exist")
             System.exit(1)
         }
-        load("js")
-        load("python")
+        load("js", ".js")
+        load("python", ".py")
     }
 
     fun run(context: PluginContext) {
@@ -57,7 +57,7 @@ object Plugins {
         }
     }
 
-    private fun load(language: String) {
+    private fun load(language: String, extension: String) {
         val dir = pluginDir.openRelative(language)
         if (!dir.isDirectory) {
             logger.warn("Unable to locate $language plugins folder.")
@@ -65,6 +65,7 @@ object Plugins {
             return
         }
         dir.listFiles().forEach {
+            if (!it.name.endsWith(extension)) return@forEach
             logger.info("Loading $language plugin: ${it.name}")
             plugins.add(
                     Plugin(
