@@ -17,6 +17,7 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:1.2.+")
     implementation("org.graalvm.sdk:graal-sdk:1.0.0-rc16")
     implementation("com.beust:klaxon:5.0.1")
+    implementation("org.xerial:sqlite-jdbc:3.27.2.1")
     implementation(kotlin("stdlib-jdk8"))
 }
 
