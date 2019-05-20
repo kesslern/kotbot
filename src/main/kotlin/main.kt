@@ -11,24 +11,23 @@ val logger = KotlinLogging.logger {}
 @KtorExperimentalAPI
 fun main() = runBlocking {
 
-    val url = "jdbc:sqlite:./kotbotdb"
-    val connection = DriverManager.getConnection(url)
 
-    if (!connection.hasTable("database_metadata")) {
-        connection.createDatabaseMigrationTable()
-        connection.createPluginDataTable()
-    }
 
-    connection.setDatabaseMetadata("test1", "foobar")
-    connection.setDatabaseMetadata("test1", "foobar2")
-    connection.setPluginData("test1", "test1", "foobar")
-    connection.setPluginData("test1", "test1", "foobar2")
-
-    logger.info("Metadata test1: " + connection.getDatabaseMetadata("test1"))
-    logger.info("Plugin data test1: " + connection.getPluginData("test1", "test1"))
-
-    Plugins
     KotBot.create()
+}
+
+object Database {
+    val connection: Connection
+
+    init {
+        val url = "jdbc:sqlite:./kotbotdb"
+        connection = DriverManager.getConnection(url)
+
+        if (!connection.hasTable("database_metadata")) {
+            connection.createDatabaseMigrationTable()
+            connection.createPluginDataTable()
+        }
+    }
 }
 
 fun Connection.hasTable(name: String): Boolean {
@@ -53,7 +52,11 @@ fun Connection.getDatabaseMetadata(key: String): String {
 }
 
 fun Connection.setPluginData(name: String, key: String, value: String?) {
-    this.createStatement().execute("REPLACE INTO plugin_data(plugin_name, key, value) VALUES ('$name', '$key', '$value')")
+    val statement = this.prepareStatement("REPLACE INTO plugin_data(plugin_name, key, value) VALUES (?, ?, ?)")
+    statement.setString(1, name)
+    statement.setString(2, key)
+    statement.setString(3, value)
+    statement.executeUpdate()
 }
 
 fun Connection.getPluginData(name: String, key: String): String? {

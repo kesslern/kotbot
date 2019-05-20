@@ -14,4 +14,6 @@ declare namespace context {
     function request(url: String): String
     function configString(key: String): String
     function configInt(key: String): Number
+    function getValue(key: String): String
+    function setValue(key: String, value: String)
 }

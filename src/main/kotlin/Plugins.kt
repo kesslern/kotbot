@@ -29,7 +29,10 @@ val PluginHeaders = mapOf(
  * Singleton object for loading and running plugins.
  */
 @KtorExperimentalAPI
-object Plugins {
+class Plugins(
+        val eventHandlerAdder:  (suspend (KotBotEvent) -> Unit) -> Unit,
+        val sayer: suspend (String, String) -> Unit
+) {
     private val pluginDir: File = File("plugins")
 
     private val plugins = mutableListOf<Plugin>()
@@ -44,16 +47,24 @@ object Plugins {
         }
         load("js", ".js")
         load("python", ".py")
-    }
 
-    fun run(context: PluginContext) {
-        val polyglotContext = Context.newBuilder().allowAllAccess(true).build()
-        polyglotContext.polyglotBindings.putMember("context", context)
-        PluginHeaders.forEach { (language, header) ->
-            polyglotContext.eval(language, header)
-        }
-        plugins.forEach {
-            polyglotContext.eval(it.language, it.body)
+        plugins.forEach { plugin ->
+            val polyglotContext = Context.newBuilder().allowAllAccess(true).build()
+            val pluginContext = PluginContext(
+                    eventHandlerAdder,
+                    sayer,
+                    getDatabaseValue = { key: String ->
+                        Database.connection.getPluginData(plugin.name, key)
+                    },
+                    setDatabaseValue = { key: String, value: String ->
+                        logger.info("Name: ${plugin.name} Key: $key Value: $value")
+                        Database.connection.setPluginData(plugin.name, key, value)
+                    }
+            )
+
+            polyglotContext.polyglotBindings.putMember("context", pluginContext)
+            polyglotContext.eval(plugin.language, PluginHeaders[plugin.language])
+            polyglotContext.eval(plugin.language, plugin.body)
         }
     }
 
@@ -84,8 +95,11 @@ object Plugins {
  */
 @KtorExperimentalAPI
 class PluginContext(
+        // TODO: Make this not use suspend
         val eventHandlerAdder:  (suspend (KotBotEvent) -> Unit) -> Unit,
-        val sayer: suspend (String, String) -> Unit
+        val sayer: suspend (String, String) -> Unit,
+        val getDatabaseValue: (String) -> String?,
+        val setDatabaseValue: (String, String) -> Unit
 ) {
     private val client = HttpClient(CIO)
 
@@ -103,6 +117,14 @@ class PluginContext(
         return runBlocking {
             client.call(url).response.readText()
         }
+    }
+
+    fun getValue(key: String): String? {
+        return this.getDatabaseValue(key)
+    }
+
+    fun setValue(key: String, value: String) {
+        this.setDatabaseValue(key, value)
     }
 
     fun configString(key: String): String? = ConfigurationFile.stringValue(key)

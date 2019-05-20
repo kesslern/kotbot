@@ -53,7 +53,7 @@ class KotBot private constructor(
 
             if (splitMessage[0].startsWith(IrcConfig.commandPrefix)){
                 command = splitMessage[0].substring(IrcConfig.commandPrefix.length)
-                body = message.substring(command.length + 1)
+                body = message.substring(command.length + 2)
             }
 
             val kotBotEvent = KotBotEvent(
@@ -97,8 +97,7 @@ class KotBot private constructor(
     )
 
     init {
-        val pluginContext = PluginContext(eventHandlerAdder = ::addEventHandler, sayer = connection::say)
-        Plugins.run(pluginContext)
+        Plugins(eventHandlerAdder = ::addEventHandler, sayer = connection::say)
     }
 
     private fun addEventHandler(handler: suspend (KotBotEvent) -> Unit) {
