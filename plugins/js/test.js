@@ -1,3 +1,7 @@
+context.addHelp("weather","Provide a zip code and get the weather")
+context.addHelp("remember", "Remember a key/value pair to be retrieved by recall")
+context.addHelp("recall", "Recall a key/value pair that was stored by remember")
+
 context.addEventHandler((event) => {
     if (event.message === "javascript") {
         event.respond("hi from javascript")

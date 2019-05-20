@@ -39,6 +39,8 @@ class KotBot private constructor(
      */
     private val shellContext: Context = Context.newBuilder().build()
 
+    private val helpInfo = mutableMapOf<String, String>()
+
     /**
      * An event handler for IrcConnection, which processes a ServerEvent into a KotBotEvent and passes the event to
      * each KotBotEventHandler.
@@ -53,7 +55,9 @@ class KotBot private constructor(
 
             if (splitMessage[0].startsWith(IrcConfig.commandPrefix)){
                 command = splitMessage[0].substring(IrcConfig.commandPrefix.length)
-                body = message.substring(command.length + 2)
+                body = if (message.length > command.length + 1) {
+                    message.substring(command.length + 2)
+                } else ""
             }
 
             val kotBotEvent = KotBotEvent(
@@ -93,11 +97,25 @@ class KotBot private constructor(
                 } else if (it.command == "js") {
                     connection.say(it.source, "${it.name}: " + shellContext.eval("js", it.body))
                 }
+            },
+            {
+                if (it.command == "help") {
+                    if (it.body?.isBlank() == false) {
+                        val help = helpInfo[it.body] ?: "I don't know ${it.body}"
+                        it.respond(help)
+                    } else {
+                        it.respond("I know how to do: " + helpInfo.keys.joinToString(" "))
+                    }
+                }
             }
     )
 
     init {
-        Plugins(eventHandlerAdder = ::addEventHandler, sayer = connection::say)
+        Plugins(eventHandlerAdder = ::addEventHandler, sayer = connection::say, helpAdder = ::addHelp)
+    }
+
+    private fun addHelp(command: String, help: String) {
+        helpInfo[command] = help
     }
 
     private fun addEventHandler(handler: suspend (KotBotEvent) -> Unit) {

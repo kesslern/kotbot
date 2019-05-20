@@ -7,6 +7,6 @@ An IRC bot written in Kotlin, using raw sockets backed by Ktor. Using GraalVM, p
 ```
 
 ## TODO
-- Add help command
-  - Plugins can add commands with a description
-  - help lists commands, or help with a command gets a specific description
+- Add plugins
+- Improve logging
+- Add doc for plugin interface

@@ -1,3 +1,9 @@
+context.addHelp("catfact", "Get a fun fact about cats.")
+context.addHelp("insult", "Get a random insult.")
+context.addHelp("trump", "Get a random Trump quote.")
+context.addHelp("kanye", "Get a random Kanye quote.")
+context.addHelp("advice", "Get random advice.")
+
 context.addEventHandler(event => {
     if (event.command === "catfact") {
         const fact = JSON.parse(context.request("https://cat-fact.herokuapp.com/facts/random"))

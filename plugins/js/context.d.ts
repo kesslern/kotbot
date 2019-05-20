@@ -16,4 +16,5 @@ declare namespace context {
     function configInt(key: String): Number
     function getValue(key: String): String
     function setValue(key: String, value: String)
+    function addHelp(command: String, help: String)
 }

@@ -30,8 +30,9 @@ val PluginHeaders = mapOf(
  */
 @KtorExperimentalAPI
 class Plugins(
-        val eventHandlerAdder:  (suspend (KotBotEvent) -> Unit) -> Unit,
-        val sayer: suspend (String, String) -> Unit
+        private val eventHandlerAdder:  (suspend (KotBotEvent) -> Unit) -> Unit,
+        private val sayer: suspend (String, String) -> Unit,
+        private val helpAdder: (String, String) -> Unit
 ) {
     private val pluginDir: File = File("plugins")
 
@@ -59,7 +60,8 @@ class Plugins(
                     setDatabaseValue = { key: String, value: String ->
                         logger.info("Name: ${plugin.name} Key: $key Value: $value")
                         Database.connection.setPluginData(plugin.name, key, value)
-                    }
+                    },
+                    helpAdder = helpAdder
             )
 
             polyglotContext.polyglotBindings.putMember("context", pluginContext)
@@ -96,10 +98,11 @@ class Plugins(
 @KtorExperimentalAPI
 class PluginContext(
         // TODO: Make this not use suspend
-        val eventHandlerAdder:  (suspend (KotBotEvent) -> Unit) -> Unit,
-        val sayer: suspend (String, String) -> Unit,
-        val getDatabaseValue: (String) -> String?,
-        val setDatabaseValue: (String, String) -> Unit
+        private val eventHandlerAdder:  (suspend (KotBotEvent) -> Unit) -> Unit,
+        private val sayer: suspend (String, String) -> Unit,
+        private val getDatabaseValue: (String) -> String?,
+        private val setDatabaseValue: (String, String) -> Unit,
+        private val helpAdder: (String, String) -> Unit
 ) {
     private val client = HttpClient(CIO)
 
@@ -125,6 +128,10 @@ class PluginContext(
 
     fun setValue(key: String, value: String) {
         this.setDatabaseValue(key, value)
+    }
+
+    fun addHelp(command: String, help: String) {
+        this.helpAdder(command, help)
     }
 
     fun configString(key: String): String? = ConfigurationFile.stringValue(key)
