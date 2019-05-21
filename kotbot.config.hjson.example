@@ -1,10 +1,23 @@
 {
-  username: kotbot,
-  hostname: "localhost",
-  channel: "#example",
-  port: 6667,
-  identify_password: "",
-  identify_owner: "",
-  command_prefix: ".",
+  # Username to connect with
+  username: "kotbot"
+
+  # Host and port of the server to connect to
+  hostname: "localhost"
+  port: 6667
+
+  # Channel to connect to
+  channel: "#example"
+
+  # Optional: provide a password and username to authenticate to NickServ with. If enabled, the bot will send a private
+  # message after connection to NickServ with "IDENTIFY ${identify_owner} ${identify_password}".
+  identify_password: ""
+  identify_owner: ""
+
+  # Prefix for command identification
+  command_prefix: "."
+
+  # OpenWeatherMap API Key for current weather data
+  # https://openweathermap.org/api
   openweathermap: ""
 }
