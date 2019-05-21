@@ -2,8 +2,7 @@ package us.kesslern.kotbot
 
 import io.ktor.util.KtorExperimentalAPI
 import io.ktor.util.error
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.graalvm.polyglot.Context
 
 /**
@@ -67,13 +66,17 @@ class KotBot private constructor(
                     body = body,
                     name = event.name!!,
                     sayer = {
-                        GlobalScope.launch { connection.say(source, it) }
+                        runBlocking {
+                            connection.say(source, it)
+                        }
                     },
                     responder = {
                         val privateMessage = source == IrcConfig.username
                         val location = if (privateMessage) event.name!! else source
                         val prefix = if (!privateMessage) "${event.name}: " else ""
-                        GlobalScope.launch { connection.say(location, "$prefix$it") }
+                        runBlocking {
+                            connection.say(location, "$prefix$it")
+                        }
                     }
             )
 

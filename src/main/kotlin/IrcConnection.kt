@@ -1,8 +1,7 @@
 package us.kesslern.kotbot
 
 import io.ktor.util.KtorExperimentalAPI
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 @KtorExperimentalAPI
 class IrcConnection(
@@ -41,23 +40,26 @@ class IrcConnection(
 
     )
 
-    private suspend fun write(data: String) = connection.write(data)
-
-    fun say(location: String, message: String) {
-        GlobalScope.launch {
-            write("PRIVMSG $location :$message")
+    private fun write(data: String) {
+        runBlocking {
+            connection.write(data)
         }
     }
 
+    fun say(location: String, message: String) = write("PRIVMSG $location :$message")
+
     fun addEventHandler(eventHandler: suspend (ServerEvent) -> Unit) = eventHandlers.add(eventHandler)
 
-    suspend fun run() {
+    fun run() {
         while (!connection.isClosedForRead()) {
             logger.info("Reading...")
 
-            val response = MessageParser.parse(connection.readLine())
-            logger.info("Server said: '$response}'")
-            eventHandlers.forEach { it(response) }
+            runBlocking {
+                val response = MessageParser.parse(connection.readLine())
+
+                logger.info("Server said: '$response}'")
+                eventHandlers.forEach { it(response) }
+            }
         }
     }
 

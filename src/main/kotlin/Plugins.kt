@@ -55,11 +55,11 @@ class Plugins(
                     eventHandlerAdder,
                     sayer,
                     getDatabaseValue = { key: String ->
-                        Database.connection.getPluginData(plugin.name, key)
+                        Database.getPluginData(plugin.name, key)
                     },
                     setDatabaseValue = { key: String, value: String ->
                         logger.info("Name: ${plugin.name} Key: $key Value: $value")
-                        Database.connection.setPluginData(plugin.name, key, value)
+                        Database.setPluginData(plugin.name, key, value)
                     },
                     helpAdder = helpAdder
             )
