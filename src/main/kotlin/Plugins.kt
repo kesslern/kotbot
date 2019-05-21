@@ -53,6 +53,7 @@ class Plugins(
         load("python", ".py")
 
         plugins.forEach { plugin ->
+            logger.debug("Starting plugin ${plugin.name}")
             val polyglotContext = Context.newBuilder().allowAllAccess(true).build()
             val pluginContext = PluginContext(
                     eventHandlerAdder,
@@ -61,7 +62,6 @@ class Plugins(
                         Database.getPluginData(plugin.name, key)
                     },
                     setDatabaseValue = { key: String, value: String ->
-                        logger.info("Name: ${plugin.name} Key: $key Value: $value")
                         Database.setPluginData(plugin.name, key, value)
                     },
                     helpAdder = helpAdder
@@ -74,6 +74,7 @@ class Plugins(
     }
 
     private fun load(language: String, extension: String) {
+        logger.debug("Loading $language plugins with extension $extension")
         val dir = pluginDir.openRelative(language)
         if (!dir.isDirectory) {
             logger.warn("Unable to locate $language plugins folder.")
@@ -81,7 +82,10 @@ class Plugins(
             return
         }
         dir.listFiles().forEach {
-            if (!it.name.endsWith(extension)) return@forEach
+            if (!it.name.endsWith(extension)) {
+                logger.info("Skipping non-$language file: ${it.name}")
+                return@forEach
+            }
             logger.info("Loading $language plugin: ${it.name}")
             plugins.add(
                     Plugin(
@@ -117,16 +121,19 @@ class PluginContext(
     }
 
     fun request(url: String): String {
+        logger.info("Requesting URL: $url")
         return runBlocking {
             client.call(url).response.readText()
         }
     }
 
     fun getValue(key: String): String? {
+        logger.debug("Getting database value: $key")
         return this.getDatabaseValue(key)
     }
 
     fun setValue(key: String, value: String) {
+        logger.debug("Setting database value: $key")
         this.setDatabaseValue(key, value)
     }
 

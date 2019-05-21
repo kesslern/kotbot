@@ -8,5 +8,4 @@ An IRC bot written in Kotlin, using raw sockets backed by Ktor. Using GraalVM, p
 
 ## TODO
 - Add plugins
-- Improve logging
 - Add doc for plugin interface

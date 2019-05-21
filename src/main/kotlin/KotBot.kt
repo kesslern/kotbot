@@ -70,6 +70,7 @@ class KotBot private constructor(
                     name = event.name!!,
                     sayer = {
                         runBlocking {
+                            logger.info("Saying in $source: $it")
                             connection.say(source, it)
                         }
                     },
@@ -77,6 +78,7 @@ class KotBot private constructor(
                         val privateMessage = source == IrcConfig.username
                         val location = if (privateMessage) event.name!! else source
                         val prefix = if (!privateMessage) "${event.name}: " else ""
+                        logger.info("Saying in $location: $prefix$it")
                         runBlocking {
                             connection.say(location, "$prefix$it")
                         }
@@ -99,8 +101,10 @@ class KotBot private constructor(
     private val eventHandlers = mutableListOf<(KotBotEvent) -> Unit>(
             {
                 if (it.command == "py") {
+                    logger.info("Running Python command: ${it.body}")
                     connection.say(it.source, "${it.name}: " + shellContext.eval("python", it.body))
                 } else if (it.command == "js") {
+                    logger.info("Running JS command: ${it.body}")
                     connection.say(it.source, "${it.name}: " + shellContext.eval("js", it.body))
                 }
             },
@@ -117,10 +121,13 @@ class KotBot private constructor(
     )
 
     init {
+        logger.debug("Initializing plugins")
         Plugins(eventHandlerAdder = ::addEventHandler, sayer = connection::say, helpAdder = ::addHelp)
     }
 
     private fun addHelp(command: String, help: String) {
+        logger.debug("Adding help for command $command")
+        logger.trace("Help: $help")
         helpInfo[command] = help
     }
 
@@ -130,6 +137,7 @@ class KotBot private constructor(
 
     companion object {
         suspend fun create() {
+            logger.info("Starting KotBot")
             val connection = IrcConnection.create()
             val kotBot = KotBot(connection)
             connection.addEventHandler(kotBot.kotBotEventCaller)

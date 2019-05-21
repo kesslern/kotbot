@@ -54,7 +54,7 @@ class RawSocketConnection private constructor() {
 
     suspend fun write(data: String) {
         val dataWithLineEndings = if (data.endsWith("\r\n")) data else data + "\r\n"
-        logger.info("Writing: ${dataWithLineEndings.trim()}")
+        logger.trace("Writing data to socket: ${dataWithLineEndings.trim()}")
         output.write(dataWithLineEndings, Charsets.UTF_8)
     }
 
