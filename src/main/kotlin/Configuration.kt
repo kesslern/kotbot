@@ -2,6 +2,8 @@ package us.kesslern.kotbot
 
 import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Parser
+import org.hjson.JsonValue
+import java.io.File
 import java.io.FileNotFoundException
 
 /**
@@ -13,7 +15,10 @@ object ConfigurationFile {
     init {
         val parser: Parser = Parser.default()
         try {
-            json = parser.parse("./kotbot.config.json") as JsonObject
+            val hjson = File("./kotbot.config.hjson").readText(Charsets.UTF_8)
+            val stream = StringBuilder()
+            stream.append(JsonValue.readHjson(hjson))
+            json = parser.parse(stream) as JsonObject
         } catch (e: FileNotFoundException) {
             throw RuntimeException("Cannot find configuration file kotbot.config.json")
         }

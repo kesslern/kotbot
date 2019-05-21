@@ -1,0 +1,10 @@
+{
+  username: kotbot,
+  hostname: "localhost",
+  channel: "#example",
+  port: 6667,
+  identify_password: "",
+  identify_owner: "",
+  command_prefix: ".",
+  openweathermap: ""
+}

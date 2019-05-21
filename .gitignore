@@ -2,5 +2,5 @@
 .idea/
 build/
 out/
-kotbot.config.json
+kotbot.config.hjson
 kotbotdb
