@@ -2,6 +2,9 @@ package us.kesslern.kotbot
 
 import io.ktor.util.KtorExperimentalAPI
 import kotlinx.coroutines.runBlocking
+import mu.KotlinLogging
+
+private val logger = KotlinLogging.logger {}
 
 @KtorExperimentalAPI
 class IrcConnection(

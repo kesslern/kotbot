@@ -3,7 +3,10 @@ package us.kesslern.kotbot
 import io.ktor.util.KtorExperimentalAPI
 import io.ktor.util.error
 import kotlinx.coroutines.runBlocking
+import mu.KotlinLogging
 import org.graalvm.polyglot.Context
+
+private val logger = KotlinLogging.logger {}
 
 /**
  * An event that is passed to plugins and built-in bot event handlers.

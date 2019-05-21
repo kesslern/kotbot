@@ -1,5 +1,9 @@
 package us.kesslern.kotbot
 
+import mu.KotlinLogging
+
+private val logger = KotlinLogging.logger {}
+
 /**
  * A scanner to provide helpful parsing methods over a string while maintaining the current position in the string.
  */
@@ -9,7 +13,7 @@ class Scanner(
     private var position = 0
 
     init {
-        logger.info("Scanning message: $message")
+        logger.debug { "Beginning scan of message: $message" }
     }
 
     fun advance(): Char = message[position++]

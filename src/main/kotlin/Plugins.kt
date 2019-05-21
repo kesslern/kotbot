@@ -6,8 +6,11 @@ import io.ktor.client.engine.cio.CIO
 import io.ktor.client.response.readText
 import io.ktor.util.KtorExperimentalAPI
 import kotlinx.coroutines.runBlocking
+import mu.KotlinLogging
 import org.graalvm.polyglot.Context
 import java.io.File
+
+private val logger = KotlinLogging.logger {}
 
 data class Plugin(
         val name: String,

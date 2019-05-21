@@ -11,8 +11,11 @@ import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.io.ByteReadChannel
 import kotlinx.coroutines.io.ByteWriteChannel
 import kotlinx.coroutines.io.readUTF8Line
+import mu.KotlinLogging
 import java.net.InetSocketAddress
 import java.util.concurrent.Executors
+
+private val logger = KotlinLogging.logger {}
 
 /**
  * Initialize a raw socket connection and provide convenience methods for sending and retrieving data.
