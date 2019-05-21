@@ -30,8 +30,8 @@ val PluginHeaders = mapOf(
  */
 @KtorExperimentalAPI
 class Plugins(
-        private val eventHandlerAdder:  (suspend (KotBotEvent) -> Unit) -> Unit,
-        private val sayer: suspend (String, String) -> Unit,
+        private val eventHandlerAdder:  ((KotBotEvent) -> Unit) -> Unit,
+        private val sayer: (String, String) -> Unit,
         private val helpAdder: (String, String) -> Unit
 ) {
     private val pluginDir: File = File("plugins")
@@ -97,23 +97,20 @@ class Plugins(
  */
 @KtorExperimentalAPI
 class PluginContext(
-        // TODO: Make this not use suspend
-        private val eventHandlerAdder:  (suspend (KotBotEvent) -> Unit) -> Unit,
-        private val sayer: suspend (String, String) -> Unit,
+        private val eventHandlerAdder:  ((KotBotEvent) -> Unit) -> Unit,
+        private val sayer: (String, String) -> Unit,
         private val getDatabaseValue: (String) -> String?,
         private val setDatabaseValue: (String, String) -> Unit,
         private val helpAdder: (String, String) -> Unit
 ) {
     private val client = HttpClient(CIO)
 
-    fun addEventHandler(handler: suspend (KotBotEvent) -> Unit) {
+    fun addEventHandler(handler: (KotBotEvent) -> Unit) {
         eventHandlerAdder(handler)
     }
 
     fun say(location: String, message: String) {
-        runBlocking {
-            sayer(location, message)
-        }
+        sayer(location, message)
     }
 
     fun request(url: String): String {

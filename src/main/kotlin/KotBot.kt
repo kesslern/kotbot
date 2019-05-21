@@ -90,7 +90,7 @@ class KotBot private constructor(
     /**
      * Event handlers that process KotBot events.
      */
-    private val eventHandlers = mutableListOf<suspend (KotBotEvent) -> Unit>(
+    private val eventHandlers = mutableListOf<(KotBotEvent) -> Unit>(
             {
                 if (it.command == "py") {
                     connection.say(it.source, "${it.name}: " + shellContext.eval("python", it.body))
@@ -118,7 +118,7 @@ class KotBot private constructor(
         helpInfo[command] = help
     }
 
-    private fun addEventHandler(handler: suspend (KotBotEvent) -> Unit) {
+    private fun addEventHandler(handler: (KotBotEvent) -> Unit) {
         eventHandlers.add(handler)
     }
 

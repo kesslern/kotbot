@@ -1,4 +1,4 @@
-def hello(message, _):
+def hello(message):
    if message.message == "python":
        message.respond("hi from python")
 

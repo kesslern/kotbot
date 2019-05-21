@@ -1,6 +1,8 @@
 package us.kesslern.kotbot
 
 import io.ktor.util.KtorExperimentalAPI
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 @KtorExperimentalAPI
 class IrcConnection(
@@ -41,8 +43,10 @@ class IrcConnection(
 
     private suspend fun write(data: String) = connection.write(data)
 
-    suspend fun say(location: String, message: String) {
-        write("PRIVMSG $location :$message")
+    fun say(location: String, message: String) {
+        GlobalScope.launch {
+            write("PRIVMSG $location :$message")
+        }
     }
 
     fun addEventHandler(eventHandler: suspend (ServerEvent) -> Unit) = eventHandlers.add(eventHandler)
