@@ -20,4 +20,7 @@
   # OpenWeatherMap API Key for current weather data
   # https://openweathermap.org/api
   openweathermap: ""
+
+  # IANA Time Zone string
+  timezone: "America/New_York"
 }
