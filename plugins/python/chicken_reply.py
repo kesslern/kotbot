@@ -4,6 +4,10 @@ responses = {'what' : 'chicken butt',
              'where': 'chicken hair',
              'when' : 'chicken pen',
              'who'  : 'chicken poo',
+             'wut'  : 'chicken slut',
+             'wot'  : 'chicken thot',
+             'whose': 'chicken booze',
+             'which': 'chicken bitch',
              'how'  : 'chicken plow'}
 
 def chicken_reply(event):
