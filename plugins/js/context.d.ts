@@ -1,6 +1,9 @@
+/**
+ * See class KotBotEvent in KotBot.kt for full documentation for KotBotEvent field descriptions and nullability.
+ */
 declare namespace KotBotEvent {
     let message: String
-    let source: String
+    let channel: String
     let command: String
     let body: String
     let name: String
@@ -8,6 +11,9 @@ declare namespace KotBotEvent {
     function respond(message: String)
 }
 
+/**
+ * See class PluginContext in Plugins.Kt for full documentation on methods available in the global context object.
+ */
 declare namespace context {
     function addEventHandler(handler: (KotBotEvent) => void)
     function say(location: String, message: String)

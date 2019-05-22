@@ -7,7 +7,7 @@ import java.sql.DriverManager
 private val logger = KotlinLogging.logger {}
 
 object Database {
-    val connection: Connection
+    private val connection: Connection
 
     init {
         val url = "jdbc:sqlite:./kotbotdb"

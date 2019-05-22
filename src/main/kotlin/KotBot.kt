@@ -9,15 +9,29 @@ import org.graalvm.polyglot.Context
 private val logger = KotlinLogging.logger {}
 
 /**
- * An event that is passed to plugins and built-in bot event handlers.
+ * An event that is passed to plugins and built-in bot event handlers. An event is passed for each message received.
  */
 data class KotBotEvent(
+        /** The entire message sent by the other person. */
         @JvmField val message: String,
-        @JvmField val source: String,
+
+        /** The channel the message was sent in. Null if private message. */
+        @JvmField val channel: String?,
+
+        /** If the message was sent with the bot's command prefix, the string between the prefix and the first space. */
         @JvmField val command: String?,
+
+        /** Any text in the message that follows the command. */
         @JvmField val body: String?,
+
+        /** The username of the sender of the message. */
         @JvmField val name: String,
+
+        /** Say a message in the channel or private message session from which the event came. */
         @JvmField val sayer: (String) -> Unit,
+
+        /** Respond in the channel or private message session from which the event came, highlighting the user who
+         * originated the event. */
         @JvmField val responder: (String) -> Unit
 ) {
     fun say(message: String) {
@@ -62,23 +76,24 @@ class KotBot private constructor(
                 } else ""
             }
 
+            val privateMessage = !source.startsWith("#")
+            val location = if (privateMessage) event.name!! else source
+
             val kotBotEvent = KotBotEvent(
-                    source = source,
+                    channel = if (source.startsWith("#")) source else null,
                     message = message,
                     command = command,
                     body = body,
                     name = event.name!!,
                     sayer = {
                         runBlocking {
-                            logger.info("Saying in $source: $it")
-                            connection.say(source, it)
+                            logger.info("Saying to $location: $it")
+                            connection.say(location, it)
                         }
                     },
                     responder = {
-                        val privateMessage = source == IrcConfig.username
-                        val location = if (privateMessage) event.name!! else source
                         val prefix = if (!privateMessage) "${event.name}: " else ""
-                        logger.info("Saying in $location: $prefix$it")
+                        logger.info("Saying to $location: $prefix$it")
                         runBlocking {
                             connection.say(location, "$prefix$it")
                         }
@@ -102,10 +117,10 @@ class KotBot private constructor(
             {
                 if (it.command == "py") {
                     logger.info("Running Python command: ${it.body}")
-                    connection.say(it.source, "${it.name}: " + shellContext.eval("python", it.body))
+                    it.say("${it.name}: " + shellContext.eval("python", it.body))
                 } else if (it.command == "js") {
                     logger.info("Running JS command: ${it.body}")
-                    connection.say(it.source, "${it.name}: " + shellContext.eval("js", it.body))
+                    it.say("${it.name}: " + shellContext.eval("js", it.body))
                 }
             },
             {
