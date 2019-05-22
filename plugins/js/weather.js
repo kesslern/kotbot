@@ -9,6 +9,7 @@ const timeZone = context.configString("timezone")
 
 
 context.addEventHandler(event => {
+  if (event.command === "weather") {
     const zip = event.body
     const key = context.configString("openweathermap")
     const weather = JSON.parse(context.request("http://api.openweathermap.org/data/2.5/weather?zip=" + zip + "&APPID=" + key))
@@ -40,4 +41,5 @@ context.addEventHandler(event => {
     ]
 
     event.respond(currentWeather.join(" | "))
+  }
 })
