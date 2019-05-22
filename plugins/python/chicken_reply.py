@@ -7,7 +7,7 @@ responses = {'what' : 'chicken butt',
              'how'  : 'chicken plow'}
 
 def chicken_reply(event):
-    if event.message in responses.keys():
+    if event.message.lower() in responses.keys():
         message = responses[event.message.lower()]
         message = message.upper() if event.message.isupper() else message
         event.respond(message)
