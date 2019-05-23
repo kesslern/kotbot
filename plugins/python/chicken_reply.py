@@ -1,3 +1,7 @@
+import re
+
+pattern = re.compile("[!?]*$")
+
 responses = {'what' : 'chicken butt',
              'why'  : 'chicken thigh',
              'wat'  : 'chicken bat',
@@ -11,9 +15,15 @@ responses = {'what' : 'chicken butt',
              'how'  : 'chicken plow'}
 
 def chicken_reply(event):
-    if event.message.lower() in responses.keys():
-        message = responses[event.message.lower()]
-        message = message.upper() if event.message.isupper() else message
+    # Strip off ! and ?
+    stripped_message = pattern.sub('', event.message)
+
+    if stripped_message.lower() in responses.keys():
+        message = responses[stripped_message.lower()]
+        message = message.upper() if stripped_message.isupper() else message
+        # Add ! and ? back
+        message += pattern.search(event.message).group()
+
         event.respond(message)
 
 context.addEventHandler(chicken_reply)
