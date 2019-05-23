@@ -21,6 +21,9 @@
   # https://openweathermap.org/api
   openweathermap: ""
 
+  # last.fm API key
+  lastfm_api: ""
+
   # IANA Time Zone string
   timezone: "America/New_York"
 }
