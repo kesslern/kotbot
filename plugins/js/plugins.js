@@ -38,6 +38,6 @@ context.addEventHandler(event => {
     const {
       definition
     } = JSON.parse(context.request(`http://api.urbandictionary.com/v0/define?term=${param}`)).list[0]
-    event.respond(definition.replace('[', '').replace(']', ''))
+    event.respond(definition.replace(/[\[\]]/g, ''))
   }
 })
